@@ -10,6 +10,8 @@
 }
 body {
     background-color: var(--background-color);
+    font-family: var(--font-poppins);
+    font-weight: 400;
 }
 .radio-size {
     width: 20px;  /* ปรับขนาดความกว้าง */

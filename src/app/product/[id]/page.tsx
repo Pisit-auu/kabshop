@@ -112,11 +112,7 @@ const handlebuy = async (event: React.FormEvent<HTMLFormElement>) => {
       <div className="bg-blue-100 min-h-screen">
         <div className="ml-4 mr-4">
           <div className="p-4 flex justify-center items-start">
-            <div className="flex items-center">
-              <Link href="/home" className="ml-2">
-                <img className="w-10 h-auto" src="/search.png" alt="Search" />
-              </Link>
-            </div>
+
           </div>
 
           <div className="bg-white h-[700px] mx-28 my-8 p-4 rounded-lg shadow-md">
