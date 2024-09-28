@@ -75,15 +75,21 @@ export default function Checkout() {
       setError('An error occurred while processing your order.');
     }
   };
-  
+
+
 
   const fetchUserData = async () => {
     try {
       const response = await axios.get(`/api/user/${session?.user?.email}`);
       const data = response.data;
+
       setUserData(data);
       setAddress(data.address);
       setUserId(data.id);
+      if (data.address === ''||data.address=== null || data.email === '' || data.lineid === ''|| data.lineid === null  || data.name === ''|| data.name === null|| data.phone === null) {
+        alert("Please input your information");
+       router.push('/user/profile/information');
+      }
 
       if (Array.isArray(data.cart)) {
         setCartItems(data.cart);
