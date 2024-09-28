@@ -62,15 +62,8 @@ export default function Product({ params }: { params: { id: string } }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col items-center">
                 <div className="flex items-center justify-center h-[600px]">
-                  <button className="text-4xl">
-                    <img className="w-[100px] h-auto" src="/arrowback.png" alt="Arrow Back" />
-                  </button>
-                  <Link href="/">
                     <img className="w-[500px] h-auto mx-4" src={img} alt="Product Image" />
-                  </Link>
-                  <button className="text-4xl">
-                    <img className="w-[100px] h-auto" src="/arrowforward.png" alt="Arrow Forward" />
-                  </button>
+
                 </div>
               </div>
 

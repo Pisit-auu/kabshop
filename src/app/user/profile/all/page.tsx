@@ -106,7 +106,7 @@ export default function All() {
 
             <div className="space-y-6">
               {orders.length > 0 ? (
-                orders.map(order => {
+                orders.map((order, index) => {
                   // Calculate the total price for the order
                   const totalOrderPrice = order.items.reduce(
                     (total, item) => total + item.totalPrice,
@@ -115,7 +115,8 @@ export default function All() {
 
                   return (
                     <div key={order.orderId} className="border rounded-lg bg-white shadow-md p-4">
-                      <div className="text-lg font-semibold text-gray-700 mb-2">Order ID: {order.orderId}</div>
+                      <div className="text-lg font-semibold text-gray-700 mb-2">Order ID: {index+1}</div>
+                      <div className="text-lg font-semibold text-gray-700 mb-2">Tracking ID: {order.orderId}</div>
                       <p className="text-gray-600 mb-4">Date: {new Date(order.createdAt).toLocaleDateString('en-GB')}</p>
                       {order.items.map(item => (
                         <div key={item.postId} className="flex items-center border-t border-gray-200 pt-4 mt-4">
