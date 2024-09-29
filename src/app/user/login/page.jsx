@@ -20,7 +20,7 @@ export default function Login() {
 
             if (result.error) {
                 console.error(result.error);
-                alert('Invalid email or password.');
+                alert('Invalid username or password.');
                 return false;
             }
 
