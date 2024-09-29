@@ -70,6 +70,10 @@ export default function CreatePost() {
     setError(null);
     setSuccess(null);
     try {
+      if(Number(price) < 0 || Number(quantity)<0 ){
+          alert("Price or quantity is greater than 0.")
+          return
+      }
       await axios.post(`/api`, {
         title,
         content,

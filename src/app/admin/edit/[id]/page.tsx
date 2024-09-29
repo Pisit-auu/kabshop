@@ -96,6 +96,10 @@ export default function Edit({ params }: { params: { id: string } }) {
     event.preventDefault();
     setLoading(true);
     try {
+        if(Number(price) < 0 || Number(quantity)<0 ){
+            alert("Price or quantity is greater than 0.")
+            return
+        }
       await axios.put(`/api/posts/${id}`, {
         title,
         content,
@@ -195,7 +199,7 @@ export default function Edit({ params }: { params: { id: string } }) {
                 </div>
                 <div className="border-b-2 border-gray-300 pb-4">
                   <div className="h-40">
-                    <div className="text-lg font-semibold mt-4">Content</div>
+                    <div className="text-lg font-semibold mt-4">Details</div>
                     <textarea
                       name="content"
                       id="content"
@@ -212,7 +216,7 @@ export default function Edit({ params }: { params: { id: string } }) {
                   className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-12"
                   disabled={loading}
                 >
-                  {loading ? 'Saving...' : 'Edit'}
+                  {loading ? 'Saving...' : 'Update'}
                 </button>
               </form>
             </div>
