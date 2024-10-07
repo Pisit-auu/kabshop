@@ -132,7 +132,7 @@ export default function Edit({ params }: { params: { id: string } }) {
         <div className="p-8 min-h-screen bg-gray-100">
           <div className="max-w-5xl mx-auto bg-white shadow-md rounded-lg p-8">
             <header className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Edit</h2>
+              <h2 className="text-2xl font-bold">Edit Product</h2>
             </header>
             <div className="space-y-6">
               <form onSubmit={handleSubmit}>
@@ -213,7 +213,7 @@ export default function Edit({ params }: { params: { id: string } }) {
                 </div>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-12"
+                  className="bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-12"
                   disabled={loading}
                 >
                   {loading ? 'Saving...' : 'Update'}

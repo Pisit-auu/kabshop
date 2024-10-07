@@ -107,11 +107,11 @@ export default function Cart() {
     const shippingCost = 36; // สามารถเพิ่มค่าจัดส่งที่นี่
     
     return (
-        <div className="h-screen">
+        <div className="h-screen bg-gray-100">
             <NavbarUser />
 
-            <div className="grid grid-cols-8 gap-8 m-8">
-                <div className="col-span-6 bg-gray-100 p-4">
+            <div className="grid grid-cols-8 gap-8 m-8 ">
+                <div className="col-span-6 bg-white p-4">
                     {cartItems.length > 0 ? (
                         cartItems.map(item => (
                             <div key={item.id} className="border-b py-2">
@@ -151,7 +151,7 @@ export default function Cart() {
                     )}
                 </div>
 
-                <div className="col-span-2 bg-gray-100 p-4">
+                <div className="col-span-2 bg-white p-4">
                     
                     <div className="grid grid-rows-3">
                         <div className="text-gray-500">Name: {userData?.name}</div>

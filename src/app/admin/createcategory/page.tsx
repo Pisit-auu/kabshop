@@ -110,7 +110,7 @@ export default function CreatePost() {
                 
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
+                  className="bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
                   disabled={loading}
                 >
                   {loading ? 'Saving...' : 'Create Category'}

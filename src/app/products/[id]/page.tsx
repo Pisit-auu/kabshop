@@ -69,7 +69,7 @@ export default function Product({ params }: { params: { id: string } }) {
 
               <div className="space-y-4 pt-20 pr-20">
                 <div className="text-2xl font-bold border-b-2 border-black pb-2">{title}</div>
-                <div className="text-lg font-semibold">รายละเอียดสินค้า :</div>
+                <div className="text-lg font-semibold">Details :</div>
                 <div className="text-gray-700 leading-relaxed">
                 </div>
                 <div className="border-2 border-black h-[200px] p-4 bg-gray-100 rounded-lg">

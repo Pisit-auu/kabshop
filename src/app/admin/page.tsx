@@ -149,7 +149,7 @@ export default function Infostock() {
             <header className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Stock</h2>
               <Link href="/admin/create">
-                <button className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out">
+                <button className="bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out">
                   Add Product
                 </button>
               </Link>
@@ -186,7 +186,7 @@ export default function Infostock() {
                 </select>
                 <button
                   onClick={fetchPosts}
-                  className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors"
+                  className="bg-sky-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors"
                   aria-label="Apply Filters"
                 >
                   Apply
@@ -221,7 +221,7 @@ export default function Infostock() {
           <header className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Categories</h2>
               <Link href="/admin/createcategory">
-                <button className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out">
+                <button className="bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out">
                   Add Category
                 </button>
               </Link>

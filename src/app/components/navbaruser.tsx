@@ -64,7 +64,7 @@ export default function NavbarUser() {
   return (
     status === 'authenticated' && session.user && (
       <div className="relative">
-        <div className="grid grid-cols-3 bg-blue-600 h-20 items-center shadow-md">
+        <div className="grid grid-cols-3 bg-sky-600 h-32 items-center shadow-xl z-50 border-b-2 border-blue-950">
           <div className="flex justify-self-start ml-8">
             <button className="focus:outline-none" onClick={toggleMenu}>
               <img className="w-8 h-8" src="/menu.png" alt="menu" />
@@ -97,7 +97,7 @@ export default function NavbarUser() {
 
         {isMenuOpen && (
           <div className="absolute left-0 top-0 w-64 h-[500px] bg-white shadow-lg z-50 rounded-lg overflow-hidden">
-            <div className="flex justify-between items-center p-4 bg-blue-500 text-white">
+            <div className="flex justify-between items-center p-4 bg-sky-600 text-white">
               <div className="text-xl font-semibold">
                 <Link href="/user/profile/information">{userData?.name || 'User'}</Link>
               </div>
@@ -108,18 +108,18 @@ export default function NavbarUser() {
 
             <div className="p-4">
               <Link href="/home">
-                <div className="text-blue-600 mb-4 hover:text-blue-800 cursor-pointer font-medium">
+                <div className="text-blue-800 mb-4 hover:text-blue-800 cursor-pointer font-medium">
                   Home
                 </div>
               </Link>
               <Link href="/user/profile/all">
-                <div className="text-blue-600 mb-4 hover:text-blue-800 cursor-pointer font-medium">
+                <div className="text-blue-800 mb-4 hover:text-blue-800 cursor-pointer font-medium">
                   Purchase history
                 </div>
               </Link>
               {role === 'admin' && (
                     <Link href="/admin">
-                <div className="text-blue-600 mb-4 hover:text-blue-800 cursor-pointer font-medium">
+                <div className="text-blue-800 mb-4 hover:text-blue-800 cursor-pointer font-medium">
                   Sales
                 </div>
               </Link>

@@ -19,9 +19,7 @@ export default function Homepro() {
         try {
             const query = new URLSearchParams({ category: selectedCategory, search }).toString();
             const url = `/api?${query}`;
-            console.log('Fetching posts with URL:', url);
             const res = await axios.get(url);
-            console.log('Posts data:', res.data); // Check the response data structure
             setPosts(res.data);
         } catch (error) {
             console.error('Error fetching posts:', error);
@@ -74,7 +72,7 @@ export default function Homepro() {
                             key={cat.id}
                             onClick={() => handleCategorySelect(cat.name)} 
                             className={`text-lg font-semibold px-4 py-2 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg ${
-                                selectedCategory === cat.name ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'
+                                selectedCategory === cat.name ? 'bg-sky-600 text-white' : 'bg-white text-gray-800'
                             }`}
                         >
                             {cat.name}
