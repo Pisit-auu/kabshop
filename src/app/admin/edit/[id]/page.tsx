@@ -11,6 +11,7 @@ interface Category {
 }
 
 export default function Edit({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [title, setTitle] = useState('');
   const [img, setIMG] = useState('');
   const [content, setContent] = useState('');
@@ -23,7 +24,7 @@ export default function Edit({ params }: { params: { id: string } }) {
   const [role, setRole] = useState<string | null>(null);
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { id } = params;
+  
 
   // Fetch post data
   const fetchPost = async (id: string) => {

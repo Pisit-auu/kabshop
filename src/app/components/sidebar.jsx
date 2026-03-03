@@ -41,7 +41,7 @@ export default function Sidebar() {
         <div className="text-2xl font-semibold text-gray-800 mb-4">{userData?.name}</div>
         <div className="text-lg font-medium text-gray-600 mb-4 ">My Account</div>
         <div className="space-y-3">
-          <Link className="block text-gray-600 ml-4 hover:text-green-600 transition duration-300" href="/user/profile/information">- Information</Link>
+          <Link className="bock text-gray-600 ml-4 hover:text-green-600 transition duration-300" href="/user/profile/information">- Information</Link>
         </div>
       </div>
 
