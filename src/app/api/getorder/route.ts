@@ -1,6 +1,4 @@
-// src/app/api/order/route.ts
 
-'use server';
 
 import { prisma } from "../../lib/prisma"
 export const runtime = "nodejs"
