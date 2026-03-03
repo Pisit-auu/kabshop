@@ -2,9 +2,8 @@
 
 'use server';
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from "../../lib/prisma"
+export const runtime = "nodejs"
 
 // GET method for fetching orders by userId
 export async function GET(request: Request) {

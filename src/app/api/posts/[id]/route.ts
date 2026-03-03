@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient()
+import { prisma } from "../../../lib/prisma"
 
+export const runtime = "nodejs"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const postId = Number(params.id);

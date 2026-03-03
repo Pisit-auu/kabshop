@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient()
 
+import { prisma } from "../lib/prisma"
+export const runtime = "nodejs"
 export async function GET(request: NextRequest){
     const searchParams = request.nextUrl.searchParams
   const category = searchParams.get('category')
