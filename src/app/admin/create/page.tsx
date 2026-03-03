@@ -5,7 +5,7 @@ import NavbarGlobal from "../../components/navbarglobal";
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
-
+import { LayoutGrid as GridIcon, PackagePlus, ChevronLeft, Image as ImageIcon, BadgeDollarSign, Info } from "lucide-react";
 interface Category {
   id: number;
   name: string;
@@ -19,193 +19,199 @@ export default function CreatePost() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [quantity, setQuantity] = useState<number | string>('');
   const [price, setPrice] = useState<number | string>('');
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Fetch categories
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`/api/categories`);
-      setCategories(response.data);
-    } catch (error) {
-      setError('Failed to fetch categories');
-      console.error(error);
-    }
-  };
-
-  // Fetch user data and role
-  const fetchUserData = async () => {
-    try {
-      if (session?.user?.email) {
-        const userResponse = await axios.get(`/api/user/${session.user.email}`);
-        setRole(userResponse.data.role || null);
+  useEffect(() => {
+    const initPage = async () => {
+      try {
+        const catRes = await axios.get(`/api/categories`);
+        setCategories(catRes.data);
+        
+        if (session?.user?.email) {
+          const userRes = await axios.get(`/api/user/${session.user.email}`);
+          setRole(userRes.data.role || null);
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (error) {
-      console.error('Failed to fetch user data', error);
-    }
-  };
+    };
+    initPage();
+  }, [session]);
 
   useEffect(() => {
-    fetchCategories();
-    fetchUserData();
-  }, []);
-
-  useEffect(() => {
-    if (status === 'authenticated' && role !== null) {
-      if (role !== 'admin') {
-        router.push('/home');
-      }
-    } else if (status === 'unauthenticated') {
-      router.push('/home');
-    }
+    if (status === 'unauthenticated') router.push('/home');
+    if (status === 'authenticated' && role && role !== 'admin') router.push('/home');
   }, [status, role, router]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    // Validation
+    if (!categoryId) return alert("กรุณาเลือกหมวดหมู่สินค้า");
+    if (Number(price) < 0 || Number(quantity) < 0) {
+      return alert("ราคาและจำนวนสินค้าต้องไม่ติดลบ");
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
+
     try {
-      if(Number(price) < 0 || Number(quantity)<0 ){
-          alert("Price or quantity is greater than 0.")
-          return
-      }
       await axios.post(`/api`, {
         title,
         content,
         price: Number(price),
         img,
         quantity: Number(quantity),
-        categoryId,
+        categoryId: Number(categoryId),
       });
-      setSuccess('Post created successfully!');
-      setTimeout(() => {
-        router.push('/admin');
-      }, 1500);
-    } catch (error) {
-      setError('Something went wrong. Please try again.');
-      console.log('error', error);
+      setSuccess('เพิ่มสินค้าลงในสต็อกเรียบร้อยแล้ว!');
+      setTimeout(() => router.push('/admin'), 1500);
+    } catch (err) {
+      setError('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     } finally {
       setLoading(false);
     }
   };
-  
 
-  if (error) {
-    return <div className="text-red-500 text-center py-4">{error}</div>;
-  }
+  if (status === 'loading' || !role) return <div className="flex h-screen items-center justify-center font-bold">Checking access...</div>;
 
-  if (role === 'admin') {
-    return (
-      <div>
-        <NavbarGlobal />
-        <div className="p-5 min-h-screen bg-gray-100">
-          <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 ">
-            <header className="mb-6">
-              <h2 className="text-3xl font-bold text-gray-800">Create New Product</h2>
-            </header>
-            {success && <div className="text-green-500 text-center py-4">{success}</div>}
-            <div className="space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4 border-b-2 border-gray-300 pb-4">
-                  <div>
-                    <label htmlFor="title" className="block text-lg font-semibold text-gray-700">Name</label>
-                    <input
-                      type="text"
-                      name="title"
-                      id="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="Price" className="block text-lg font-semibold text-gray-700">Price</label>
-                    <input
-                      type="number"
-                      name="Price"
-                      id="Price"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="quantity" className="block text-lg font-semibold text-gray-700">Quantity</label>
-                    <input
-                      type="number"
-                      name="quantity"
-                      id="quantity"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="img" className="block text-lg font-semibold text-gray-700">Image URL</label>
-                    <input
-                      type="text"
-                      name="img"
-                      id="img"
-                      value={img}
-                      onChange={(e) => setIMG(e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="border-b-2 border-gray-300 pb-4">
-                  <div>
-                    <label htmlFor="category" className="block text-lg font-semibold text-gray-700">Category</label>
-                    <select
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(Number(e.target.value))}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="border-b-2 border-gray-300 pb-4">
-                  <div>
-                    <label htmlFor="content" className="block text-lg font-semibold text-gray-700">Details</label>
-                    <textarea
-                      name="content"
-                      id="content"
-                      required
-                      rows={4}
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    ></textarea>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : 'Create New Product'}
-                </button>
-              </form>
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <NavbarGlobal />
+      
+      <div className="max-w-4xl mx-auto px-4 mt-8">
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition mb-6">
+          <ChevronLeft size={20} /> ย้อนกลับ
+        </button>
+
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-blue-600 p-8 text-white">
+            <div className="flex items-center gap-3">
+              <PackagePlus size={32} />
+              <h1 className="text-3xl font-extrabold">เพิ่มสินค้าใหม่</h1>
             </div>
+            <p className="text-blue-100 mt-2">กรอกรายละเอียดสินค้าให้ครบถ้วนเพื่อเริ่มการขาย</p>
           </div>
+
+          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+            {success && <div className="p-4 bg-green-50 text-green-700 rounded-xl border border-green-200 animate-bounce text-center font-bold">{success}</div>}
+            {error && <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-200 text-center font-bold">{error}</div>}
+
+            {/* ส่วนที่ 1: ข้อมูลสินค้า */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+                <Info size={20} className="text-blue-600" /> ข้อมูลพื้นฐาน
+              </h2>
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">ชื่อสินค้า</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="เช่น รองเท้าผ้าใบสีขาว"
+                  required
+                  className="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">รายละเอียดสินค้า</label>
+                <textarea
+                  rows={4}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="รายละเอียด คุณสมบัติสินค้า..."
+                  required
+                  className="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition"
+                />
+              </div>
+            </div>
+
+            {/* ส่วนที่ 2: ราคาและคลังสินค้า */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+                  <BadgeDollarSign size={20} className="text-green-600" /> การตั้งราคา
+                </h2>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-gray-400">฿</span>
+                  <input
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="ราคาขาย"
+                    required
+                    className="w-full p-3 pl-8 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+                  <GridIcon size={20} className="text-orange-600" /> สต็อกและหมวดหมู่
+                </h2>
+                <div className="flex gap-4">
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    placeholder="จำนวนในคลัง"
+                    required
+                    className="flex-1 p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  />
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="flex-1 p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition bg-white"
+                  >
+                    <option value="">เลือกหมวดหมู่</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ส่วนที่ 3: รูปภาพ */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+                <ImageIcon size={20} className="text-purple-600" /> รูปภาพสินค้า
+              </h2>
+              <input
+                type="text"
+                value={img}
+                onChange={(e) => setIMG(e.target.value)}
+                placeholder="วาง URL รูปภาพสินค้าที่นี่"
+                required
+                className="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+              {img && (
+                <div className="mt-4 p-2 border-2 border-dashed rounded-xl w-40 h-40 relative group overflow-hidden">
+                  <img src={img} alt="Preview" className="w-full h-full object-cover rounded-lg shadow-sm transition group-hover:scale-110" 
+                       onError={(e) => (e.currentTarget.src = "https://placehold.co/400?text=Invalid+Image")} />
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:bg-gray-400 active:scale-95"
+            >
+              {loading ? "กำลังบันทึกข้อมูล..." : "บันทึกและขึ้นขายทันที"}
+            </button>
+          </form>
         </div>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }

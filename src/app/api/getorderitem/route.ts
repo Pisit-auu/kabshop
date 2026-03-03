@@ -3,38 +3,43 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // Fetch all order items
+    // 1. ดึงข้อมูล OrderItem ทั้งหมด
     const orderItems = await prisma.orderItem.findMany({
       select: {
         postId: true,
         totalPrice: true,
-        quantity: true,
       },
     });
 
-    // Calculate total sales for each post
+    // 2. คำนวณยอดขายรวมแยกตาม postId ด้วย Map
     const salesMap = new Map<number, number>();
     orderItems.forEach(item => {
       const currentSales = salesMap.get(item.postId) || 0;
-      const itemTotal = item.totalPrice;
-      salesMap.set(item.postId, currentSales + itemTotal);
+      salesMap.set(item.postId, currentSales + item.totalPrice);
     });
 
-    // Update sales for each post
-    for (const [postId, totalSales] of salesMap.entries()) {
-      await prisma.post.update({
+    // 3. เตรียมคำสั่ง Update ทั้งหมดไว้ในรูปแบบของ Array of Promises
+    const updatePromises = Array.from(salesMap.entries()).map(([postId, totalSales]) =>
+      prisma.post.update({
         where: { id: postId },
         data: { Sales: totalSales },
-      });
-    }
+      })
+    );
 
-    return new Response(JSON.stringify({ message: 'Sales updated successfully' }), {
+    // 4. รอให้ทุกรายการอัปเดตเสร็จพร้อมกัน (Parallel Update)
+    await Promise.all(updatePromises);
+
+    return new Response(JSON.stringify({ 
+      message: 'Sales updated successfully',
+      updatedCount: updatePromises.length 
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
     console.error('Error updating sales:', error);
-    return new Response('Failed to update sales', {
+    return new Response(JSON.stringify({ error: 'Failed to update sales' }), {
       status: 500,
     });
   }

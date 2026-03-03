@@ -1,133 +1,143 @@
+'use client'
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import axios from 'axios';
+import axios from "axios";
+import Image from "next/image";
 
 export default function NavbarUser() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [role, setRole] = useState(null); 
-  const fetchPosts = async () => {
-    if (!session?.user?.email) return; // Ensure email is available
-    try {
-      const response = await axios.get(`/api/user/${session.user.email}`);
-      setUserData(response.data);
-    } catch (error) {
-      setError('Failed to fetch user data');
-    } finally {
-      setLoading(false);
-    }
-  };
+
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-    } else if (status === 'authenticated' && session?.user?.email) {
-      
-      // Fetch user role based on email
-      const fetchUserRole = async () => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+
+    if (status === "authenticated" && session?.user?.email) {
+      const fetchUser = async () => {
         try {
-          const response = await axios.get(`/api/user/${session.user.email}`);
-          setRole(response.data.role); // Assuming the API returns a `role` field
-        } catch (error) {
-          console.error('Error fetching user role:', error);
+          const res = await axios.get(`/api/user/${session.user.email}`);
+          setUserData(res.data);
+          setRole(res.data.role);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
         }
       };
-      fetchUserRole();
+      fetchUser();
     }
-  }, [router, status, session?.user?.email]);
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-    } else {
-      fetchPosts();
-    }
-  }, [router, status, session?.user?.email]); // Depend on email change
+  }, [status, session?.user?.email]);
 
-  const handleUpdate = async () => {
-    // Your update logic here (e.g., form submission)
-    // After successful update, refetch the user data
-    await fetchPosts();
-  };
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  if (loading) {
+    return (
+      <div className="h-20 flex items-center justify-center bg-sky-600 text-white">
+        Loading...
+      </div>
+    );
+  }
 
   return (
-    status === 'authenticated' && session.user && (
-      <div className="relative">
-        <div className="grid grid-cols-3 bg-sky-600 h-32 items-center shadow-xl z-50 border-b-2 border-blue-950">
-          <div className="flex justify-self-start ml-8">
-            <button className="focus:outline-none" onClick={toggleMenu}>
-              <img className="w-8 h-8" src="/menu.png" alt="menu" />
+    status === "authenticated" && (
+      <>
+        {/* Navbar */}
+        <nav className="sticky top-0 z-50 bg-sky-600 shadow-lg border-b border-blue-900">
+          <div className="relative max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+            {/* Menu Button */}
+            <button onClick={() => setIsMenuOpen(true)}>
+              <Image src="/menu.png" alt="menu" width={32} height={32} />
             </button>
-          </div>
 
-          <div className="justify-self-center">
-            <Link href="/home">
-              <img className="w-20 h-auto" src="/KAB.png" alt="Logo" />
-            </Link>
-          </div>
-
-          <div className="flex justify-self-end items-center mr-8 space-x-4">
-            <Link href="/user/profile/information">
-              <img className="w-8 h-8" src="/user.png" alt="user" />
-            </Link>
-
-            <div className="text-white text-xl font-semibold">
-              <Link href="/user/profile/information">{userData?.name || 'User'}</Link>
-            </div>
-            <Link href={`/cart`}>
-              <img className="w-8 h-8" src="/cart.png" alt="cart" />
+            {/* Logo */}
+            <Link
+              href="/home"
+              className="absolute left-1/2 -translate-x-1/2 group"
+            >
+              <Image
+                src="/KAB.png"
+                alt="logo"
+                width={70}
+                height={70}
+                className="transition-transform duration-300 group-hover:scale-110"
+              />
             </Link>
 
-            <button onClick={() => signOut({ callbackUrl: '/' })}>
-              <img className="w-8 h-8" src="/logout.png" alt="logout" />
-            </button>
-          </div>
-        </div>
+            {/* Right Section */}
+            <div className="flex items-center space-x-5 text-white">
+              <Link
+                href="/user/profile/information"
+                className="flex items-center space-x-2 hover:opacity-80 transition"
+              >
+                <Image src="/user.png" alt="user" width={28} height={28} />
+                <span className="font-semibold">
+                  {userData?.name || "User"}
+                </span>
+              </Link>
 
-        {isMenuOpen && (
-          <div className="absolute left-0 top-0 w-64 h-[500px] bg-white shadow-lg z-50 rounded-lg overflow-hidden">
-            <div className="flex justify-between items-center p-4 bg-sky-600 text-white">
-              <div className="text-xl font-semibold">
-                <Link href="/user/profile/information">{userData?.name || 'User'}</Link>
-              </div>
-              <button className="hover:text-red-400" onClick={toggleMenu}>
-                ✖
+              <Link href="/cart" className="hover:scale-110 transition">
+                <Image src="/cart.png" alt="cart" width={28} height={28} />
+              </Link>
+
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="hover:scale-110 transition"
+              >
+                <Image src="/logout.png" alt="logout" width={28} height={28} />
               </button>
             </div>
+          </div>
+        </nav>
 
-            <div className="p-4">
-              <Link href="/home">
-                <div className="text-blue-800 mb-4 hover:text-blue-800 cursor-pointer font-medium">
-                  Home
-                </div>
-              </Link>
-              <Link href="/user/profile/all">
-                <div className="text-blue-800 mb-4 hover:text-blue-800 cursor-pointer font-medium">
-                  Purchase history
-                </div>
-              </Link>
-              {role === 'admin' && (
-                    <Link href="/admin">
-                <div className="text-blue-800 mb-4 hover:text-blue-800 cursor-pointer font-medium">
-                  Sales
-                </div>
+        {/* Overlay */}
+        {isMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40"
+            onClick={() => setIsMenuOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div
+          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-50 transform transition-transform duration-300
+          ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <div className="p-5 bg-sky-600 text-white flex justify-between items-center">
+            <span className="font-semibold text-lg">
+              {userData?.name}
+            </span>
+            <button onClick={() => setIsMenuOpen(false)}>✖</button>
+          </div>
+
+          <div className="p-5 space-y-4 text-gray-700">
+            <Link href="/home" className="block hover:text-sky-600 font-medium">
+              Home
+            </Link>
+
+            <Link
+              href="/user/profile/all"
+              className="block hover:text-sky-600 font-medium"
+            >
+              Purchase History
+            </Link>
+
+            {role === "admin" && (
+              <Link
+                href="/admin"
+                className="block hover:text-sky-600 font-medium"
+              >
+                Admin page
               </Link>
             )}
-            </div>
           </div>
-        )}
-      </div>
+        </div>
+      </>
     )
   );
 }

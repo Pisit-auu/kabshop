@@ -34,7 +34,7 @@ model User {
   password  String
   lineid    String?
   address   String?
-  phone     Int?  
+  phone     String?  
   purchaseamount Int @default(0)
   image     String?
   role      String   @default("member")

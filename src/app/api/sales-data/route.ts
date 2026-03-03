@@ -4,21 +4,15 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // ดึงข้อมูลยอดขายของแต่ละผลิตภัณฑ์
+    // 1. ดึงข้อมูลยอดขายโดยใช้ groupBy (ถอด select ออกเพื่อให้ TS ไม่ Error)
     const salesData = await prisma.orderItem.groupBy({
       by: ['postId'],
       _sum: {
         totalPrice: true
-      },
-      select: {
-        postId: true,
-        _sum: {
-          totalPrice: true
-        }
       }
     });
 
-    // ดึงข้อมูลชื่อผลิตภัณฑ์
+    // 2. ดึงข้อมูลชื่อผลิตภัณฑ์
     const posts = await prisma.post.findMany({
       where: {
         id: {
@@ -27,7 +21,7 @@ export async function GET() {
       }
     });
 
-    // จับคู่ข้อมูลยอดขายกับชื่อผลิตภัณฑ์
+    // 3. จับคู่ข้อมูลยอดขายกับชื่อผลิตภัณฑ์
     const formattedSalesData = salesData.map(item => {
       const post = posts.find(p => p.id === item.postId);
       return {

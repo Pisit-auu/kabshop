@@ -1,187 +1,200 @@
 'use client'
-import Link from "next/link";
 import NavbarUser from "../../components/navbaruser";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image"
+import { ShoppingCart, CreditCard, Plus, Minus, Package, AlertCircle } from "lucide-react";
 
 export default function Product({ params }: { params: { id: string } }) {
-  const [post, setPosts] = useState([]);
   const { id } = params;
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [postId, setpostid] = useState('');
-  const [content, setContent] = useState('');
-  const [value, setValue] = useState(0); // จำนวนสินค้าที่มีอยู่
-  const [img, setIMG] = useState('');
   const { data: session, status } = useSession();
-  const [userData, setUserData] = useState<string | null>(null); // Change type to string to hold user id
-  const [quantity, setQuantity] = useState(1);
-  const [price, setPrice] = useState('');
 
-  const fetchPost = async (id: string) => {
+  // Product States
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [stock, setStock] = useState(0); 
+  const [img, setIMG] = useState('');
+  const [postId, setPostId] = useState('');
+  const [price, setPrice] = useState('');
+  
+  // UI States
+  const [userData, setUserData] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPost = useCallback(async () => {
     try {
+      setLoading(true);
       const res = await axios.get(`/api/posts/${id}`);
-      setPosts(res.data);
       setTitle(res.data.title);
-      setValue(res.data.quantity);
+      setStock(res.data.quantity);
       setContent(res.data.content);
       setIMG(res.data.img);
-      setpostid(res.data.id);
+      setPostId(res.data.id);
       setPrice(res.data.price);
       
-      const response = await axios.get(`/api/user/${session?.user?.email}`);
-      setUserData(response.data.id); // Assuming response.data.id is the user ID
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleaddcart = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-        if (userData && postId) {
-            const response = await axios.post('/api/cart', {
-                userId: userData,
-                postId,
-                quantity,
-            });
-
-            if (response.status === 200) {
-                alert('Item added to cart successfully');
-            } else {
-                alert('Failed to add item to cart');
-            }
-        } else {
-            alert('User data or post ID is missing');
-        }
-    } catch (error) {
-        console.log('error', error);
-        alert('Something went wrong');
-    }
-};
-const handlebuy = async (event: React.FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-  try {
-      if (userData && postId) {
-          const response = await axios.post('/api/cart', {
-              userId: userData,
-              postId,
-              quantity,
-          });
-
-          if (response.status === 200) {
-            router.push('/checkout');
-          } else {
-              alert('Failed to add item to cart');
-          }
-      } else {
-          alert('User data or post ID is missing');
+      if (session?.user?.email) {
+        const response = await axios.get(`/api/user/${session.user.email}`);
+        setUserData(response.data.id);
       }
-  } catch (error) {
-      console.log('error', error);
-      alert('Something went wrong');
-  }
-};
-  
-
-  useEffect(() => {
-    if (id && session) {
-      fetchPost(id);
+    } catch (error) {
+      console.error("Failed to fetch product:", error);
+    } finally {
+      setLoading(false);
     }
   }, [id, session]);
 
-  const incrementQuantity = () => {
-    setQuantity(prevQuantity => {
-      if (prevQuantity < value) {
-        return prevQuantity + 1;
-      } else {
-        return prevQuantity; // ไม่เพิ่มถ้าจำนวนถึงขีดจำกัดแล้ว
+  useEffect(() => {
+    if (id) fetchPost();
+  }, [fetchPost]);
+
+  const handleAction = async (type: 'cart' | 'buy') => {
+    if (status === "unauthenticated") {
+      alert("กรุณาเข้าสู่ระบบก่อนทำรายการ");
+      return router.push("/login");
+    }
+
+    if (!userData || !postId) return;
+
+    try {
+      const response = await axios.post('/api/cart', {
+        userId: userData,
+        postId,
+        quantity,
+      });
+
+      if (response.status === 200) {
+        if (type === 'buy') {
+          router.push('/cart'); // หรือไปที่ /checkout ตาม flow ของคุณ
+        } else {
+          alert('เพิ่มสินค้าลงรถเข็นแล้ว');
+        }
       }
-    });
+    } catch (error) {
+      console.error(error);
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    }
+  };
+
+  const incrementQuantity = () => {
+    if (quantity < stock) setQuantity(prev => prev + 1);
   };
 
   const decrementQuantity = () => {
-    setQuantity(prevQuantity => (prevQuantity > 1 ? prevQuantity - 1 : 1));
+    if (quantity > 1) setQuantity(prev => prev - 1);
   };
 
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  );
+
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <NavbarUser />
-      <div className="bg-blue-100 min-h-screen">
-        <div className="ml-4 mr-4">
-          <div className="p-4 flex justify-center items-start">
-
-          </div>
-
-          <div className="bg-white h-[700px] mx-28 my-8 p-4 rounded-lg shadow-md">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center">
-                <div className="flex items-center justify-center h-[600px]">
-                    <img className="w-[500px] h-auto mx-4" src={img} alt="Product Image" />
-                </div>
+      
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 overflow-hidden border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+            
+            {/* Left: Product Image */}
+            <div className="bg-gray-50 p-8 flex items-center justify-center min-h-[500px]">
+              <div className="relative w-full h-full max-h-[500px] hover:scale-105 transition-transform duration-500">
+                {img ? (
+                  <Image
+                    src={img} 
+                    alt={title}
+                    fill
+                    className="object-contain p-4"
+                    priority
+                  />
+                ) : (
+                  <div className="flex flex-col items-center text-gray-400">
+                    <Package size={64} />
+                    <p>ไม่มีรูปภาพสินค้า</p>
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="space-y-4 pt-20 pr-20">
-                <div className="text-2xl font-bold border-b-2 border-black pb-2">{title}</div>
-                <div className="text-lg font-semibold">Details :</div>
-                <div className="text-gray-700 leading-relaxed">
+            {/* Right: Product Details */}
+            <div className="p-8 md:p-16 flex flex-col justify-center">
+              <div className="space-y-6">
+                <div>
+                  <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{title}</h1>
+                  <p className="text-3xl font-bold text-orange-500 italic">
+                    ฿{Number(price).toLocaleString()}.00
+                  </p>
                 </div>
-                <div className="border-2 border-black h-[200px] p-4 bg-gray-100 rounded-lg">
-                  {content}
+
+                <div className="space-y-3">
+                  <h3 className="text-lg font-bold text-gray-700 flex items-center gap-2">
+                    <AlertCircle size={18} className="text-blue-500" /> รายละเอียดสินค้า
+                  </h3>
+                  <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-gray-600 leading-relaxed min-h-[120px]">
+                    {content || "ไม่มีข้อมูลรายละเอียดสินค้า"}
+                  </div>
                 </div>
-                <div className="text-orange-500 text-2xl 	"> ฿ {price}.00</div>
-                {value > 0 ? (
-                  <>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div className="flex items-center justify-center">
+
+                {stock > 0 ? (
+                  <div className="space-y-6 pt-4">
+                    {/* Quantity Selector */}
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center border-2 border-gray-200 rounded-2xl p-1 bg-white shadow-sm">
                         <button 
                           onClick={decrementQuantity}
-                          className="text-4xl px-4 py-2 bg-gray-200 rounded-md"
+                          className="p-3 hover:bg-gray-100 rounded-xl transition-colors text-gray-600"
                         >
-                          -
+                          <Minus size={20} />
                         </button>
                         <input
-                          className="text-center text-4xl border-2 border-black rounded-md mx-2 w-20"
+                          className="w-16 text-center text-xl font-bold bg-transparent outline-none"
                           type="number"
                           value={quantity}
                           readOnly
                         />
                         <button 
                           onClick={incrementQuantity}
-                          className="text-4xl px-4 py-2 bg-gray-200 rounded-md"
+                          className="p-3 hover:bg-gray-100 rounded-xl transition-colors text-gray-600"
                         >
-                          +
+                          <Plus size={20} />
                         </button>
                       </div>
+                      <span className="text-gray-500 font-medium">
+                        คลังสินค้า: <span className="text-gray-900">{stock} ชิ้น</span>
+                      </span>
                     </div>
-                    <div className="pl-4">{value} items remaining</div>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div>
-                        <form onSubmit={handleaddcart}>
-                          <button 
-                            type="submit"
-                            className="w-full border-2 border-black text-xl rounded-lg py-2 bg-yellow-300 hover:bg-yellow-400"
-                          >
-                            Add to Cart
-                          </button>
-                        </form>
-                      </div>
-                      <div>
-                      <form onSubmit={handlebuy}>
-                        <button className="w-full border-2 border-black text-xl rounded-lg py-2 bg-green-300 hover:bg-green-400">
-                          Buy
-                        </button>
-                        </form>
-                      </div>
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => handleAction('cart')}
+                        className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-yellow-100"
+                      >
+                        <ShoppingCart size={22} />
+                        ใส่รถเข็น
+                      </button>
+                      <button 
+                        onClick={() => handleAction('buy')}
+                        className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-blue-100"
+                      >
+                        <CreditCard size={22} />
+                        ซื้อเลย
+                      </button>
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <div className="text-red-500 text-xl font-bold">Out of Stock</div>
+                  <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-xl">
+                    <AlertCircle /> สินค้าหมดชั่วคราว
+                  </div>
                 )}
               </div>
             </div>
+
           </div>
         </div>
       </div>

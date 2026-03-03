@@ -3,6 +3,7 @@ import axios from "axios";
 import Link from "next/link";
 import React, { useState } from 'react';
 import { useRouter } from "next/navigation";
+import Image from "next/image"
 
 export default function Register() {
     const [email, setEmail] = useState('');
@@ -28,7 +29,12 @@ export default function Register() {
             <div className="w-full max-w-lg p-10 bg-white shadow-md rounded-lg">
                 <div className="flex justify-center mb-4">
                     <Link href="/">
-                        <img className="w-36 h-36" src="/KAB.png" alt="Logo" />
+                        <Image
+                        src="/KAB.png"
+                        alt="logo"
+                        width={100}
+                        height={100}
+                        />
                     </Link>
                 </div>
 

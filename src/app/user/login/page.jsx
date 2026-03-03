@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from "next/image"
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -36,7 +37,12 @@ export default function Login() {
             <div className="w-full max-w-lg p-10 bg-white shadow-md rounded-lg">
                 <div className="flex justify-center mb-4">
                     <Link href="/">
-                        <img className="w-36 h-36" src="/KAB.png" alt="Logo" />
+                        <Image
+                        src="/KAB.png"
+                        alt="logo"
+                        width={100}
+                        height={100}
+                        />
                     </Link>
                 </div>
 
@@ -80,7 +86,7 @@ export default function Login() {
 
                     <div className="text-center">
                         <p className="text">
-                            If you don't have an account{" "}
+                            If you Don&apos;t have an account{" "}
                             <Link className="text-blue-700 hover:text-blue-900" href="/user/register">sign up</Link>{" "}
                             here.
                         </p>
