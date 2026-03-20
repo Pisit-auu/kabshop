@@ -4,8 +4,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**', 
+      },
+      // เพิ่มโดเมนของ iStock ตรงนี้ครับ 👇
+      {
+        protocol: 'https',
         hostname: 'media.istockphoto.com',
-        port: '',
         pathname: '/**',
       },
     ],

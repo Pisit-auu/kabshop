@@ -32,6 +32,40 @@ export default function Edit({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    // เพิ่มฟังก์ชันจัดการการอัปโหลดรูปไปที่ API ของคุณ
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsUploadingImage(true);
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // ยิงไปที่ API /api/uploadimg ตามที่เราทำไว้
+        const res = await axios.post('/api/uploadimg', formData);
+
+        if (res.data?.url) {
+          setIMG(res.data.url); // อัปเดตรูปใหม่แทนรูปเดิม
+        } else {
+          console.error('No URL returned from the server');
+          alert('อัปโหลดสำเร็จ แต่ไม่พบ URL ของรูปภาพ');
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          alert(`เกิดข้อผิดพลาดในการอัปโหลด: ${error.message}`);
+        } else {
+          console.error('Unknown error occurred', error);
+          alert('เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุในการอัปโหลด');
+        }
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
   // ดึงข้อมูลทั้งหมดที่จำเป็น
   const fetchData = useCallback(async () => {
     try {
@@ -198,21 +232,49 @@ export default function Edit({ params }: { params: { id: string } }) {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
                <div className="space-y-4">
                   <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    <ImageIcon size={18} className="text-purple-600" /> รูปภาพ (URL)
+                    <ImageIcon size={18} className="text-purple-600" /> รูปภาพสินค้า
                   </label>
-                  <input
-                    type="text"
-                    value={img}
-                    onChange={(e) => setIMG(e.target.value)}
-                    className="w-full p-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none mb-4"
-                    required
-                  />
-                  {img && (
-                    <div className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 p-2">
-                       <img src={img} alt="Preview" className="w-full h-full object-cover rounded-xl" />
+                  
+                  <div className="flex flex-col gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isUploadingImage}
+                      className="w-full p-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                    />
+                    
+                    {/* แจ้งเตือนตอนกำลังโหลด */}
+                    {isUploadingImage && (
+                      <div className="flex items-center gap-2 text-blue-600">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm font-medium animate-pulse">กำลังอัปโหลดรูปภาพใหม่...</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* แสดงรูปภาพเดิม หรือ รูปภาพใหม่ที่เพิ่งอัปโหลด */}
+                  {img && !isUploadingImage && (
+                    <div className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 p-2 group bg-gray-50 mt-4">
+                       <img 
+                         src={img} 
+                         alt="Preview" 
+                         className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105" 
+                       />
+                       {/* ปุ่มลบรูป */}
+                       <button
+                         type="button"
+                         onClick={() => setIMG('')}
+                         className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
+                         title="ลบรูปภาพ"
+                       >
+                         ×
+                       </button>
                     </div>
                   )}
                </div>
+
+               {/* ส่วนเลือกหมวดหมู่คงไว้เหมือนเดิมครับ 👇 */}
                <div className="space-y-4">
                   <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
                     <LayoutGrid size={18} className="text-blue-600" /> หมวดหมู่สินค้า

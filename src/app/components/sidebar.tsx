@@ -105,7 +105,6 @@ export default function Sidebar() {
 
       {/* Version Info */}
       <div className="text-center pb-4">
-         <p className="text-xs text-gray-400 font-bold tracking-widest opacity-50 italic">VER 1.0.4 - 2026</p>
       </div>
     </div>
   );
