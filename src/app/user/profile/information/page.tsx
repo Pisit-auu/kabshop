@@ -110,7 +110,7 @@ export default function Information() {
   const getLabel = (field: string) => {
     switch (field) {
       case 'name': return 'ชื่อ-นามสกุล';
-      case 'email': return 'อีเมลติดต่อ';
+      case 'email': return 'Email/Username (หากเปลี่ยนจะต้องทำการ Login ใหม่)';
       case 'phone': return 'เบอร์โทรศัพท์';
       case 'lineid': return 'Line ID';
       case 'address': return 'ที่อยู่สำหรับการจัดส่ง';
