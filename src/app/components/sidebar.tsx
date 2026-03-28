@@ -52,7 +52,7 @@ export default function Sidebar() {
             {userData?.name ? userData.name.charAt(0).toUpperCase() : <User size={40} />}
           </div>
           <h2 className="text-2xl font-black text-gray-800 line-clamp-1 px-2">{userData?.name || 'User'}</h2>
-          <p className="text-xs font-bold text-blue-500 uppercase tracking-[0.2em] mt-2">สมาชิกทั่วไป</p>
+          <p className="text-xs font-bold text-blue-500 uppercase tracking-[0.2em] mt-2">{userData?.role}</p>
         </div>
 
         {/* Menu Navigation - เพิ่ม Gap ระหว่างกลุ่มเมนู */}
