@@ -29,13 +29,14 @@ export async function GET() {
 // POST method for creating a new order
 export async function POST(request: Request) {
   try {
-    const { userId, orderId, items } = await request.json();
+    const { userId, orderId, items ,Username } = await request.json();
 
     // Create the order
     const newOrder = await prisma.order.create({
       data: {
         userId: userId,
         orderId: orderId,
+        Username: Username,
         items: {
           create: items.map((item: any) => ({
             postId: item.postId,

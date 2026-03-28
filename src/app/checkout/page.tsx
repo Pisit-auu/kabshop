@@ -85,6 +85,7 @@ export default function Checkout() {
       await axios.post('/api/order', {
         userId: Number(userData.id),
         orderId,
+        Username : userData.email,
         items,
       });
       await axios.put(`/api/user/${session?.user?.email}`, {

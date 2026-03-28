@@ -104,7 +104,7 @@ export default function Bill() {
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 overflow-hidden border border-gray-100">
           
           {/* Header Success Section */}
-          <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-10 text-white text-center">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-10 text-white text-center">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4 backdrop-blur-md">
               <CheckCircle2 size={48} />
             </div>
