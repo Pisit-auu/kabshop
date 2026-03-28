@@ -143,7 +143,6 @@ export default function CreateCategory() {
           </div>
 
           <div className="mt-8 text-center text-gray-400 text-xs">
-            Admin Panel Version 2.0 • จัดการข้อมูลหมวดหมู่สินค้า
           </div>
         </div>
       </div>
