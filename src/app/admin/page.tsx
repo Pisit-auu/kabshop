@@ -113,7 +113,7 @@ export default function Infostock() {
     labels: salesData.map(item => item.title),
     datasets: [
       {
-        label: 'ยอดขาย (ชิ้น)',
+        label: 'ยอดขาย (บาท)',
         data: salesData.map(item => item.Sales || 0),
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',
