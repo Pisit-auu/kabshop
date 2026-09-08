@@ -1,53 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import cloudinary from '../../lib/cloudinary';
+import { NextRequest, NextResponse } from "next/server";
+import cloudinary from "../../lib/cloudinary";
+import { requireAdmin, fail, badRequest } from "../../lib/guard";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]);
+
+/** Admin only, typed and size-capped. This used to accept uploads from anyone. */
 export async function POST(req: NextRequest) {
   try {
-    // รับข้อมูลจาก formData()
+    await requireAdmin();
+
     const formData = await req.formData();
-    const file = formData.get('file');
+    const file = formData.get("file");
 
-    // ตรวจสอบว่าเป็น File หรือไม่
-    if (!(file instanceof Blob)) {
-      return NextResponse.json({ error: 'No file uploaded or invalid file type' }, { status: 400 });
-    }
+    if (!(file instanceof Blob)) throw badRequest("ไม่พบไฟล์ที่อัปโหลด");
+    if (!ALLOWED.has(file.type)) throw badRequest("รองรับเฉพาะไฟล์ JPG, PNG, WebP, AVIF และ GIF");
+    if (file.size > MAX_BYTES) throw badRequest("ไฟล์ใหญ่เกิน 5 MB");
 
-    // แปลง Blob เป็น Buffer (ใช้ stream เพื่อป้องกันปัญหาจาก experimental feature)
     const buffer = Buffer.from(await file.arrayBuffer());
+    const base64Image = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-    // สร้าง base64 string สำหรับอัปโหลด
-    const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
-
-    // อัปโหลดภาพไปที่ Cloudinary
-    const uploadResponse = await cloudinary.uploader.upload(base64Image, {
-      folder: 'uploads',
-    });
-
-    // ส่ง URL ของไฟล์ที่อัปโหลดกลับไป
-    return NextResponse.json({ url: uploadResponse.secure_url });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const uploaded = await cloudinary.uploader.upload(base64Image, { folder: "uploads" });
+    return NextResponse.json({ url: uploaded.secure_url });
+  } catch (error) {
+    return fail(error, "อัปโหลดรูปภาพไม่สำเร็จ");
   }
 }
-
-/*
-export async function DELETE(req: NextRequest) {
-  try {
-    const { public_id } = await req.json(); // รับข้อมูล public_id จาก body ของ request
-
-    if (!public_id) {
-      return NextResponse.json({ error: 'Public ID is required' }, { status: 400 });
-    }
-
-    // ลบไฟล์จาก Cloudinary
-    const result = await cloudinary.uploader.destroy(public_id);
-
-    if (result.result === 'ok') {
-      return NextResponse.json({ message: 'File deleted successfully' });
-    } else {
-      return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 });
-    }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}*/

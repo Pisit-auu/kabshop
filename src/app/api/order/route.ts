@@ -1,55 +1,27 @@
-import { prisma } from "../../lib/prisma"
-export const runtime = "nodejs"
-import { NextResponse } from 'next/server';
-// GET method for fetching orders
+import { prisma } from "../../lib/prisma";
+import { requireAdmin, fail } from "../../lib/guard";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * The whole shop's order log. Admin only.
+ * Order creation lives in POST /api/checkout, inside one transaction — this
+ * route no longer accepts writes, so an order can never exist without its
+ * stock decrement.
+ */
 export async function GET() {
   try {
+    await requireAdmin();
     const orders = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
       include: {
-        items: {
-          include: {
-            post: {
-              select: {
-                title: true,
-                img: true,
-              },
-            },
-          },
-        },
+        user: { select: { name: true, email: true } },
+        items: { include: { post: { select: { title: true, img: true } } } },
       },
     });
-
-    return NextResponse.json(orders);
+    return Response.json(orders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    return new NextResponse('Failed to fetch orders', { status: 500 });
-  }
-}
-
-// POST method for creating a new order
-export async function POST(request: Request) {
-  try {
-    const { userId, orderId, items ,Username } = await request.json();
-
-    // Create the order
-    const newOrder = await prisma.order.create({
-      data: {
-        userId: userId,
-        orderId: orderId,
-        Username: Username,
-        items: {
-          create: items.map((item: any) => ({
-            postId: item.postId,
-            quantity: item.quantity,
-            totalPrice: item.totalPrice,
-          })),
-        },
-      },
-    });
-
-    return NextResponse.json(newOrder, { status: 201 });
-  } catch (error) {
-    console.error('Error creating order:', error);
-    return new NextResponse('Failed to create order', { status: 500 });
+    return fail(error, "โหลดรายการสั่งซื้อไม่สำเร็จ");
   }
 }

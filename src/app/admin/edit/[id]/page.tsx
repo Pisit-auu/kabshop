@@ -1,322 +1,227 @@
-'use client';
+"use client";
 
-import { useSession } from "next-auth/react";
-import NavbarGlobal from "../../../components/navbarglobal";
-import axios from 'axios';
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Save, ImageIcon, LayoutGrid, BadgeDollarSign, FileText, AlertCircle } from "lucide-react";
+import Masthead from "../../../components/masthead";
+import SiteFoot from "../../../components/sitefoot";
+import RequireAuth from "../../../components/requireauth";
+import { useFlash } from "../../../components/flash";
+import { FormShell, Fieldset, ImageField } from "../../../components/adminform";
+import { Button, ButtonLink, Label, Notice, PageLoading, Sheet } from "../../../components/press";
 
-interface Category {
-  id: number;
-  name: string;
+type Category = { id: number; name: string };
+
+export default function EditProductPage({ params }: { params: { id: string } }) {
+  return (
+    <RequireAuth admin>
+      <EditProduct id={params.id} />
+    </RequireAuth>
+  );
 }
 
-export default function Edit({ params }: { params: { id: string } }) {
-  const { id } = params;
+function EditProduct({ id }: { id: string }) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const flash = useFlash();
 
-  // Form States
-  const [title, setTitle] = useState('');
-  const [img, setIMG] = useState('');
-  const [content, setContent] = useState('');
-  const [categoryId, setCategoryId] = useState<number | string>('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [quantity, setQuantity] = useState<number | string>('');
-  const [price, setPrice] = useState<number | string>('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [img, setImg] = useState("");
 
-  // Status States
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-
-    // เพิ่มฟังก์ชันจัดการการอัปโหลดรูปไปที่ API ของคุณ
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      setIsUploadingImage(true);
-
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // ยิงไปที่ API /api/uploadimg ตามที่เราทำไว้
-        const res = await axios.post('/api/uploadimg', formData);
-
-        if (res.data?.url) {
-          setIMG(res.data.url); // อัปเดตรูปใหม่แทนรูปเดิม
-        } else {
-          console.error('No URL returned from the server');
-          alert('อัปโหลดสำเร็จ แต่ไม่พบ URL ของรูปภาพ');
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error('Error message:', error.message);
-          alert(`เกิดข้อผิดพลาดในการอัปโหลด: ${error.message}`);
-        } else {
-          console.error('Unknown error occurred', error);
-          alert('เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุในการอัปโหลด');
-        }
-      } finally {
-        setIsUploadingImage(false);
-      }
+  useEffect(() => {
+    document.documentElement.dataset.section = "cobalt";
+    return () => {
+      delete document.documentElement.dataset.section;
     };
-  // ดึงข้อมูลทั้งหมดที่จำเป็น
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [postRes, catRes] = await Promise.all([
-        axios.get(`/api/posts/${id}`),
-        axios.get(`/api/categories`)
-      ]);
+  }, []);
 
-      const post = postRes.data;
-      setTitle(post.title);
-      setIMG(post.img);
-      setQuantity(post.quantity);
-      setPrice(post.price);
-      setContent(post.content);
-      setCategoryId(post.categoryId);
-      setCategories(catRes.data);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [pRes, cRes] = await Promise.all([
+          fetch(`/api/posts/${id}`, { cache: "no-store" }),
+          fetch("/api/categories", { cache: "no-store" }),
+        ]);
+        const post = await pRes.json();
+        if (!pRes.ok) throw new Error(post?.error ?? "");
+        if (cancelled) return;
 
-      if (session?.user?.email) {
-        const userRes = await axios.get(`/api/user/${session.user.email}`);
-        setRole(userRes.data.role || null);
+        setTitle(post.title ?? "");
+        setContent(post.content ?? "");
+        setPrice(String(post.price ?? ""));
+        setQuantity(String(post.quantity ?? ""));
+        setCategoryId(String(post.categoryId ?? ""));
+        setImg(post.img ?? "");
+        setCategories(cRes.ok ? await cRes.json() : []);
+      } catch (err) {
+        if (!cancelled) setLoadError(err instanceof Error && err.message ? err.message : "โหลดข้อมูลสินค้าไม่สำเร็จ");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch (err) {
-      setError('ไม่สามารถโหลดข้อมูลสินค้าได้');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [id, session]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!categoryId) return setError("กรุณาเลือกหมวดหมู่สินค้า");
 
-  // Security Check
-  useEffect(() => {
-    if (status === 'unauthenticated') router.push('/home');
-    if (status === 'authenticated' && role && role !== 'admin') router.push('/home');
-  }, [status, role, router]);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (Number(price) < 0 || Number(quantity) < 0) return alert("ราคาและจำนวนห้ามติดลบ");
-
-    setIsSaving(true);
+    setSaving(true);
     try {
-      await axios.put(`/api/posts/${id}`, {
-        title,
-        content,
-        price: Number(price),
-        img,
-        quantity: Number(quantity),
-        categoryId: Number(categoryId),
+      const res = await fetch(`/api/posts/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          content,
+          img,
+          price: Number(price),
+          quantity: Number(quantity),
+          categoryId: Number(categoryId),
+        }),
       });
-      router.push('/admin');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "บันทึกไม่สำเร็จ");
+
+      flash("ok", `อัปเดต “${title}” แล้ว`);
+      router.push("/admin");
+      router.refresh();
     } catch (err) {
-      setError('บันทึกข้อมูลไม่สำเร็จ');
-      setIsSaving(false);
+      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setSaving(false);
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
-      <div className="flex flex-col h-screen items-center justify-center space-y-4 bg-gray-50">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-500 font-medium animate-pulse">กำลังดึงข้อมูลสินค้า...</p>
+      <div className="min-h-screen">
+        <Masthead />
+        <PageLoading label="กำลังดึงข้อมูลสินค้า" />
       </div>
     );
   }
 
-  if (error && !isSaving) {
+  if (loadError) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-sm">
-          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">เกิดข้อผิดพลาด</h2>
-          <p className="text-gray-500 mb-6">{error}</p>
-          <button onClick={() => window.location.reload()} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">ลองใหม่อีกครั้ง</button>
-        </div>
+      <div className="min-h-screen">
+        <Masthead />
+        <Sheet width="narrow" className="py-16">
+          <Notice>{loadError}</Notice>
+          <div className="mt-6">
+            <ButtonLink href="/admin" tone="quiet">
+              กลับหน้าจัดการร้าน
+            </ButtonLink>
+          </div>
+        </Sheet>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <NavbarGlobal />
-      
-      <div className="max-w-4xl mx-auto px-4 mt-8">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition mb-6 font-medium">
-          <ChevronLeft size={20} /> กลับหน้าจัดการ
-        </button>
+    <div className="min-h-screen">
+      <Masthead />
+      <main>
+        <Sheet width="column" className="pb-20">
+          <FormShell title="แก้ไขสินค้า" intro={`รหัสสินค้า #${id} — การเปลี่ยนแปลงจะมีผลกับหน้าร้านทันที`}>
+            <form onSubmit={submit} noValidate className="space-y-6">
+              {error && <Notice>{error}</Notice>}
 
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
-            <h1 className="text-3xl font-extrabold flex items-center gap-3">
-               แก้ไขข้อมูลสินค้า
-            </h1>
-            <p className="text-blue-100 mt-2 opacity-90">ID สินค้า: #{id}</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-8 space-y-10">
-            {/* ส่วนที่ 1: Basic Info */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2 text-blue-600 font-bold uppercase tracking-wider text-sm">
-                <FileText size={18} /> ข้อมูลทั่วไป
-              </div>
-              <div className="grid grid-cols-1 gap-4">
+              <Fieldset legend="ข้อมูลสินค้า">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">ชื่อสินค้า (Title)</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    required
-                  />
+                  <Label htmlFor="title">ชื่อสินค้า</Label>
+                  <input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} className="u-field" />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">รายละเอียดสินค้า</label>
+                  <Label htmlFor="content">รายละเอียดสินค้า</Label>
                   <textarea
-                    rows={4}
+                    id="content"
+                    required
+                    rows={5}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    required
+                    className="u-field resize-y"
                   />
                 </div>
-              </div>
-            </section>
+              </Fieldset>
 
-            {/* ส่วนที่ 2: Pricing & Stock */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-blue-50/50 rounded-3xl border border-blue-100/50">
-               <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    <BadgeDollarSign size={18} className="text-green-600" /> ราคาขาย
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-4 text-gray-400 font-bold">฿</span>
+              <Fieldset legend="ราคาและคลังสินค้า">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  <div>
+                    <Label htmlFor="price" hint="บาท">ราคาขาย</Label>
                     <input
+                      id="price"
                       type="number"
+                      min={0}
+                      required
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full p-4 pl-10 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
+                      className="u-field u-fig"
                     />
                   </div>
-               </div>
-               <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    <LayoutGrid size={18} className="text-orange-600" /> จำนวนสต็อก
-                  </label>
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full p-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                    required
-                  />
-               </div>
-            </section>
-
-            {/* ส่วนที่ 3: Media & Category */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    <ImageIcon size={18} className="text-purple-600" /> รูปภาพสินค้า
-                  </label>
-                  
-                  <div className="flex flex-col gap-3">
+                  <div>
+                    <Label htmlFor="quantity" hint="ชิ้น">จำนวนในคลัง</Label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={isUploadingImage}
-                      className="w-full p-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                      id="quantity"
+                      type="number"
+                      min={0}
+                      required
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      className="u-field u-fig"
                     />
-                    
-                    {/* แจ้งเตือนตอนกำลังโหลด */}
-                    {isUploadingImage && (
-                      <div className="flex items-center gap-2 text-blue-600">
-                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm font-medium animate-pulse">กำลังอัปโหลดรูปภาพใหม่...</p>
-                      </div>
-                    )}
                   </div>
-
-                  {/* แสดงรูปภาพเดิม หรือ รูปภาพใหม่ที่เพิ่งอัปโหลด */}
-                  {img && !isUploadingImage && (
-                    <div className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 p-2 group bg-gray-50 mt-4">
-                       <img 
-                         src={img} 
-                         alt="Preview" 
-                         className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105" 
-                       />
-                       {/* ปุ่มลบรูป */}
-                       <button
-                         type="button"
-                         onClick={() => setIMG('')}
-                         className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
-                         title="ลบรูปภาพ"
-                       >
-                         ×
-                       </button>
-                    </div>
-                  )}
-               </div>
-
-               {/* ส่วนเลือกหมวดหมู่คงไว้เหมือนเดิมครับ 👇 */}
-               <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    <LayoutGrid size={18} className="text-blue-600" /> หมวดหมู่สินค้า
-                  </label>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(Number(e.target.value))}
-                    className="w-full p-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white h-[58px]"
-                  >
-                    <option value="">เลือกหมวดหมู่</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                  <div className="bg-blue-50 p-4 rounded-2xl text-xs text-blue-600 leading-relaxed border border-blue-100 italic">
-                    * การเปลี่ยนหมวดหมู่จะส่งผลต่อการกรองสินค้าในหน้าหลักของลูกค้าทันที
+                  <div>
+                    <Label htmlFor="category">หมวดหมู่</Label>
+                    <select
+                      id="category"
+                      required
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      className="u-field"
+                    >
+                      <option value="">เลือกหมวดหมู่</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-               </div>
-            </section>
+                </div>
+                <p className="text-caption text-ink-mid">
+                  การเปลี่ยนหมวดหมู่มีผลกับการกรองสินค้าในหน้าร้านทันที
+                </p>
+              </Fieldset>
 
-            <div className="pt-6">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-100 active:scale-95 disabled:bg-gray-400"
-              >
-                {isSaving ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    บันทึกข้อมูล...
-                  </div>
-                ) : (
-                  <>
-                    <Save size={24} />
-                    <span>อัปเดตข้อมูลสินค้า</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+              <Fieldset legend="รูปภาพ">
+                <ImageField value={img} onChange={setImg} />
+              </Fieldset>
+
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" size="lg" busy={saving} className="flex-1">
+                  บันทึกการเปลี่ยนแปลง
+                </Button>
+                <Button type="button" tone="quiet" size="lg" onClick={() => router.push("/admin")}>
+                  ยกเลิก
+                </Button>
+              </div>
+            </form>
+          </FormShell>
+        </Sheet>
+      </main>
+      <SiteFoot />
     </div>
   );
 }

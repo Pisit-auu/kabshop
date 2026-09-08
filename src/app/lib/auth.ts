@@ -1,7 +1,6 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
-import bcrypt from "bcrypt"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 
 
@@ -16,8 +15,14 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        // Loaded here, not at module scope: guard.ts imports this file, and a
+        // native binding in every route's module graph breaks the build.
+        const bcrypt = (await import("bcrypt")).default
+
+        // Case-insensitive: sign-up normalises to lowercase, but accounts
+        // created before that do exist with mixed-case addresses.
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: credentials.email.trim(), mode: "insensitive" } },
         })
 
         if (

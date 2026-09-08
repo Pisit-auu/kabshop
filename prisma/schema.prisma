@@ -6,6 +6,9 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  // "native" covers the machine that generates; the Debian target keeps the
+  // client working under WSL and on Linux deploy targets.
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 model Post {

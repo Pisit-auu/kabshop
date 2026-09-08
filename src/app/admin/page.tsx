@@ -1,361 +1,582 @@
-'use client';
+"use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import NavbarGlobal from "../components/navbarglobal";
-import axios from 'axios';
-import React, { useEffect, useState, useCallback } from 'react';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Edit3, Trash2, Plus, Search, TrendingUp, Users, ShoppingBag, X } from "lucide-react"; 
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import Masthead from "../components/masthead";
+import SiteFoot from "../components/sitefoot";
+import RequireAuth from "../components/requireauth";
+import { useFlash } from "../components/flash";
+import { Button, ButtonLink, Mark, Money, Notice, RunningHead, Sheet } from "../components/press";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-export default function Infostock() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+type Product = {
+  id: number;
+  title: string;
+  price: number | null;
+  quantity: number | null;
+  Sales: number;
+  category?: { name: string } | null;
+};
+type Category = { id: number; name: string; _count?: { posts: number } };
+type Order = {
+  orderId: string;
+  createdAt: string;
+  Username: string | null;
+  user?: { name: string | null; email: string } | null;
+  items: { totalPrice: number }[];
+};
 
-  // States
-  const [posts, setPosts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [salesData, setSalesData] = useState([]);
-  const [topBuyer, setTopBuyer] = useState({ name: '-', amount: 0 });
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
-  
-  // 1. เปลี่ยน State orders ให้เริ่มต้นเป็น Array ว่าง เพื่อรอรับข้อมูลจาก API
-  const [orders, setOrders] = useState([]);
-  
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [sort, setSort] = useState('desc');
-  const [role, setRole] = useState('');
-  const [error, setError] = useState('');
+const SHIPPING_COST = 36;
 
-  const initAdminData = useCallback(async () => {
-    try {
-      const query = new URLSearchParams({ category, search, sort }).toString();
-      
-      const [resPosts, resCats, resTopBuy, resOrders] = await Promise.all([
-        axios.get(`/api?${query}`),
-        axios.get(`/api/categories`),
-        axios.get(`/api/user`),
-        axios.get(`/api/order`) 
-      ]);
+export default function AdminPage() {
+  return (
+    <RequireAuth admin>
+      <Admin />
+    </RequireAuth>
+  );
+}
 
-      setPosts(resPosts.data);
-      setCategories(resCats.data);
-      setSalesData(resPosts.data); 
-      
-      if(resTopBuy.data) {
-        setTopBuyer({ name: resTopBuy.data.name, amount: resTopBuy.data.purchaseamount });
-      }
+function Admin() {
+  const flash = useFlash();
 
-      // 3. จัดการข้อมูล Orders ที่ได้จาก API
-      if(resOrders.data) {
-        const formattedOrders = resOrders.data.map(order => {
-          // คำนวณยอดรวมของออเดอร์นี้จาก items
-          const orderTotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
-          
-          // แปลงวันที่ให้อ่านง่าย (เช่น 3 Mar 2026)
-          const dateObj = new Date(order.createdAt);
-          const formattedDate = dateObj.toLocaleDateString('en-GB', { 
-            day: 'numeric', month: 'short', year: 'numeric' 
-          });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [summary, setSummary] = useState<{ topBuyer: { name: string; purchaseamount: number } | null; memberCount: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-          return {
-            id: `ORD-${order.orderId}`,
-            customer: `${order.Username}`, // หากคุณมี API ดึงชื่อ user ค่อยเอามาผูกภายหลังได้
-            total: orderTotal,
-            status: 'Completed', // ข้อมูลจาก API ไม่มี status จึงจำลองเป็น Completed ไว้ก่อน
-            date: formattedDate,
-            rawDate: dateObj // เก็บไว้สำหรับเรียงลำดับ
-          };
-        });
-
-        // เรียงลำดับจากออเดอร์ล่าสุดไปเก่าสุด
-        formattedOrders.sort((a, b) => b.rawDate - a.rawDate);
-
-        setOrders(formattedOrders);
-      }
-
-    } catch (error) {
-      console.error(error);
-      setError('ไม่สามารถโหลดข้อมูลได้');
-    }
-  }, [category, search, sort]);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [showAllOrders, setShowAllOrders] = useState(false);
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/home');
-    if (status === 'authenticated' && session?.user?.email) {
-      axios.get(`/api/user/${session.user.email}`).then(res => {
-        if (res.data.role !== 'admin') router.push('/home');
-        else {
-          setRole('admin');
-          initAdminData();
-        }
-      });
-    }
-  }, [status, session, initAdminData, router]);
+    document.documentElement.dataset.section = "cobalt";
+    return () => {
+      delete document.documentElement.dataset.section;
+    };
+  }, []);
 
-  const handleDelete = async (type, id) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบรายการนี้?')) return;
+  const load = useCallback(async () => {
+    setError(null);
     try {
-      await axios.delete(`/api/${type}/${id}`);
-      alert('ลบข้อมูลเรียบร้อย');
-      initAdminData(); 
-    } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      const query = new URLSearchParams({ category, search }).toString();
+      const [p, c, s, o] = await Promise.all([
+        fetch(`/api?${query}`, { cache: "no-store" }),
+        fetch("/api/categories", { cache: "no-store" }),
+        fetch("/api/user", { cache: "no-store" }),
+        fetch("/api/order", { cache: "no-store" }),
+      ]);
+      if (!p.ok || !c.ok || !s.ok || !o.ok) throw new Error();
+      setProducts(await p.json());
+      setCategories(await c.json());
+      setSummary(await s.json());
+      setOrders(await o.json());
+    } catch {
+      setError("โหลดข้อมูลหลังร้านไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setLoading(false);
+    }
+  }, [category, search]);
+
+  useEffect(() => {
+    const t = setTimeout(load, 250);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  const remove = async (kind: "posts" | "categories", id: number, label: string) => {
+    try {
+      const res = await fetch(`/api/${kind}/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "ลบไม่สำเร็จ");
+      flash("ok", `ลบ “${label}” แล้ว`);
+      setConfirming(null);
+      load();
+    } catch (err) {
+      flash("warn", err instanceof Error ? err.message : "ลบไม่สำเร็จ");
     }
   };
 
+  const revenue = useMemo(
+    () => orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.totalPrice, 0) + SHIPPING_COST, 0),
+    [orders],
+  );
+  const outOfStock = products.filter((p) => (p.quantity ?? 0) === 0).length;
+
+  const topSellers = useMemo(
+    () => [...products].filter((p) => p.Sales > 0).sort((a, b) => b.Sales - a.Sales).slice(0, 8),
+    [products],
+  );
+
   const chartData = {
-    labels: salesData.map(item => item.title),
+    labels: topSellers.map((p) => (p.title.length > 18 ? `${p.title.slice(0, 17)}…` : p.title)),
     datasets: [
       {
-        label: 'ยอดขาย (บาท)',
-        data: salesData.map(item => item.Sales || 0),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-        borderRadius: 5,
+        label: "ยอดขาย (บาท)",
+        data: topSellers.map((p) => p.Sales),
+        backgroundColor: "#1240c4",
+        hoverBackgroundColor: "#191813",
+        borderWidth: 0,
+        borderRadius: 0,
+        barPercentage: 0.72,
       },
     ],
   };
 
-  if (status === 'loading' || (status === 'authenticated' && !role)) {
-    return <div className="flex h-screen items-center justify-center">กำลังตรวจสอบสิทธิ์...</div>;
+  const visibleOrders = showAllOrders ? orders : orders.slice(0, 6);
+
+  return (
+    <div className="min-h-screen">
+      <Masthead />
+
+      <main>
+        <Sheet className="pb-20">
+          <RunningHead
+            title="จัดการร้าน"
+            meta="สต็อก หมวดหมู่ และคำสั่งซื้อทั้งหมดของ KABSHOP"
+            action={
+              <div className="flex flex-wrap gap-2">
+                <ButtonLink href="/admin/createcategory" tone="quiet">
+                  <Plus size={16} aria-hidden /> เพิ่มหมวดหมู่
+                </ButtonLink>
+                <ButtonLink href="/admin/create">
+                  <Plus size={16} aria-hidden /> เพิ่มสินค้า
+                </ButtonLink>
+              </div>
+            }
+          />
+
+          {error && (
+            <div className="mt-6">
+              <Notice>{error}</Notice>
+            </div>
+          )}
+
+          {/* The figures band: read across like a market table, not stat cards. */}
+          <dl className="mt-8 grid grid-cols-2 gap-px border border-rule bg-rule lg:grid-cols-4">
+            <Figure label="สินค้าในระบบ" value={loading ? "…" : String(products.length)} note={`หมด ${outOfStock} รายการ`} />
+            <Figure label="หมวดหมู่" value={loading ? "…" : String(categories.length)} />
+            <Figure label="คำสั่งซื้อ" value={loading ? "…" : String(orders.length)} note={`รวม ฿${revenue.toLocaleString("th-TH")}`} />
+            <Figure
+              label="ลูกค้าอันดับหนึ่ง"
+              value={summary?.topBuyer?.name ?? "—"}
+              note={
+                summary?.topBuyer
+                  ? `ยอดสะสม ฿${summary.topBuyer.purchaseamount.toLocaleString("th-TH")}`
+                  : "ยังไม่มียอดซื้อ"
+              }
+              text
+            />
+          </dl>
+
+          <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
+            {/* min-w-0: without it the grid track stretches to the table's
+                min-width and the whole page scrolls sideways on a phone. */}
+            <div className="min-w-0 space-y-10">
+              {/* Inventory */}
+              <section aria-labelledby="ad-stock">
+                <h2 id="ad-stock" className="u-display text-h4">
+                  คลังสินค้า
+                </h2>
+                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="relative min-w-[200px] flex-1">
+                    <label htmlFor="ad-search" className="sr-only">
+                      ค้นหาสินค้า
+                    </label>
+                    <Search
+                      size={16}
+                      aria-hidden
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
+                    />
+                    <input
+                      id="ad-search"
+                      type="search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="ค้นหาชื่อสินค้า"
+                      className="u-field !pl-10 !text-small"
+                    />
+                  </div>
+                  <div className="min-w-[180px]">
+                    <label htmlFor="ad-cat" className="sr-only">
+                      กรองตามหมวดหมู่
+                    </label>
+                    <select
+                      id="ad-cat"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="u-field !text-small"
+                    >
+                      <option value="">ทุกหมวดหมู่</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Phones get a ruled list; a 620px table inside a scroller
+                    still pushes the document sideways in Chromium. */}
+                <ul className="mt-4 divide-y divide-rule border border-rule bg-stock lg:hidden">
+                  {products.map((p) => {
+                    const stock = p.quantity ?? 0;
+                    const key = `posts-${p.id}`;
+                    return (
+                      <li key={p.id} className="px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="min-w-0 text-small font-semibold">{p.title}</p>
+                          <Money value={p.price} className="shrink-0 text-small" />
+                        </div>
+                        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-mid">
+                          <span>{p.category?.name ?? "ไม่มีหมวดหมู่"}</span>
+                          {stock === 0 ? (
+                            <Mark tone="scarlet">หมด</Mark>
+                          ) : (
+                            <span className={stock <= 3 ? "text-scarlet-text" : ""}>
+                              คงเหลือ <span className="u-fig font-bold">{stock}</span> ชิ้น
+                            </span>
+                          )}
+                        </p>
+                        <div className="mt-3">
+                          <RowActions
+                            id={p.id}
+                            label={p.title}
+                            confirmKey={key}
+                            confirming={confirming}
+                            setConfirming={setConfirming}
+                            onDelete={() => remove("posts", p.id, p.title)}
+                            editHref={`/admin/edit/${p.id}`}
+                            align="start"
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {!loading && products.length === 0 && (
+                    <li className="px-4 py-10 text-center text-small text-ink-mid">
+                      {search || category ? "ไม่พบสินค้าตามเงื่อนไขที่กรอง" : "ยังไม่มีสินค้าในคลัง"}
+                    </li>
+                  )}
+                </ul>
+
+                <div className="mt-4 hidden border border-rule bg-stock lg:block">
+                  <table className="w-full border-collapse text-left">
+                    <caption className="sr-only">รายการสินค้าทั้งหมดในคลัง</caption>
+                    <thead>
+                      <tr className="border-b-2 border-ink">
+                        <th scope="col" className="u-label px-4 py-3">ชื่อสินค้า</th>
+                        <th scope="col" className="u-label px-4 py-3">หมวดหมู่</th>
+                        <th scope="col" className="u-label px-4 py-3 text-right">ราคา</th>
+                        <th scope="col" className="u-label px-4 py-3 text-right">คงเหลือ</th>
+                        <th scope="col" className="u-label px-4 py-3 text-right">จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-rule">
+                      {products.map((p) => {
+                        const stock = p.quantity ?? 0;
+                        return (
+                          <tr key={p.id} className="transition-colors duration-150 hover:bg-paper">
+                            <td className="px-4 py-3 text-small font-semibold">{p.title}</td>
+                            <td className="px-4 py-3 text-caption text-ink-mid">{p.category?.name ?? "—"}</td>
+                            <td className="px-4 py-3 text-right">
+                              <Money value={p.price} className="text-small" />
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {stock === 0 ? (
+                                <Mark tone="scarlet">หมด</Mark>
+                              ) : (
+                                <span className={`u-fig text-small font-bold ${stock <= 3 ? "text-scarlet-text" : ""}`}>
+                                  {stock}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <RowActions
+                                id={p.id}
+                                label={p.title}
+                                confirmKey={`posts-${p.id}`}
+                                confirming={confirming}
+                                setConfirming={setConfirming}
+                                onDelete={() => remove("posts", p.id, p.title)}
+                                editHref={`/admin/edit/${p.id}`}
+                                align="end"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {!loading && products.length === 0 && (
+                    <div className="p-10 text-center">
+                      <p className="text-small text-ink-mid">
+                        {search || category ? "ไม่พบสินค้าตามเงื่อนไขที่กรอง" : "ยังไม่มีสินค้าในคลัง"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Sales */}
+              <section aria-labelledby="ad-sales">
+                <h2 id="ad-sales" className="u-display text-h4">
+                  ยอดขายรายสินค้า
+                </h2>
+                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
+                <div className="mt-4 border border-rule bg-stock p-5">
+                  {topSellers.length === 0 ? (
+                    <p className="py-10 text-center text-small text-ink-mid">ยังไม่มียอดขายที่จะแสดง</p>
+                  ) : (
+                    <div className="h-[300px]">
+                      <Bar
+                        data={chartData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              backgroundColor: "#191813",
+                              padding: 10,
+                              cornerRadius: 0,
+                              displayColors: false,
+                              callbacks: {
+                                label: (ctx) => `฿${Number(ctx.raw).toLocaleString("th-TH")}`,
+                              },
+                            },
+                          },
+                          scales: {
+                            x: {
+                              grid: { display: false },
+                              border: { color: "#191813", width: 2 },
+                              ticks: { color: "#57554a", font: { size: 11 } },
+                            },
+                            y: {
+                              grid: { color: "#c9c6b8" },
+                              border: { display: false },
+                              ticks: {
+                                color: "#57554a",
+                                font: { size: 11 },
+                                callback: (v) => `฿${Number(v).toLocaleString("th-TH")}`,
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            {/* Right column */}
+            <div className="space-y-10">
+              <section aria-labelledby="ad-cats">
+                <h2 id="ad-cats" className="u-display text-h4">
+                  หมวดหมู่
+                </h2>
+                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
+                <ul className="mt-4 border border-rule bg-stock">
+                  {categories.map((c) => {
+                    const key = `categories-${c.id}`;
+                    return (
+                      <li key={c.id} className="border-b border-rule px-4 py-3 last:border-b-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="min-w-0 truncate text-small font-semibold">
+                            {c.name}{" "}
+                            <span className="u-fig text-caption font-normal text-ink-soft">
+                              {c._count?.posts ?? 0}
+                            </span>
+                          </span>
+                          {confirming === key ? (
+                            <div className="flex shrink-0 items-center gap-2">
+                              <Button size="sm" tone="danger" onClick={() => remove("categories", c.id, c.name)}>
+                                ลบ
+                              </Button>
+                              <Button size="sm" tone="quiet" onClick={() => setConfirming(null)}>
+                                ยกเลิก
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="-mr-2 flex shrink-0 items-center">
+                              <Link
+                                href={`/admin/editcategory/${c.id}`}
+                                aria-label={`แก้ไขหมวดหมู่ ${c.name}`}
+                                className="inline-flex h-10 w-10 items-center justify-center text-ink-soft transition-colors duration-150 hover:text-ink"
+                              >
+                                <Pencil size={15} aria-hidden />
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => setConfirming(key)}
+                                aria-label={`ลบหมวดหมู่ ${c.name}`}
+                                className="inline-flex h-10 w-10 items-center justify-center text-ink-soft transition-colors duration-150 hover:text-scarlet-text"
+                              >
+                                <Trash2 size={15} aria-hidden />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {confirming === key && (
+                          <p className="mt-2 text-caption text-scarlet-text">
+                            ลบหมวดหมู่นี้จะลบสินค้าทั้งหมด {c._count?.posts ?? 0} รายการในหมวดด้วย
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
+                  {!loading && categories.length === 0 && (
+                    <li className="px-4 py-8 text-center text-small text-ink-mid">ยังไม่มีหมวดหมู่</li>
+                  )}
+                </ul>
+              </section>
+
+              <section aria-labelledby="ad-orders">
+                <h2 id="ad-orders" className="u-display text-h4">
+                  คำสั่งซื้อล่าสุด
+                </h2>
+                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
+                <ul className="mt-4 border border-rule bg-stock">
+                  {visibleOrders.map((o) => {
+                    const total = o.items.reduce((s, i) => s + i.totalPrice, 0) + SHIPPING_COST;
+                    return (
+                      <li key={o.orderId} className="border-b border-rule px-4 py-3 last:border-b-0">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="u-fig text-small font-bold">{o.orderId}</span>
+                          <Money value={total} className="text-small" />
+                        </div>
+                        <p className="mt-1 truncate text-caption text-ink-mid">
+                          {o.user?.name || o.user?.email || o.Username || "ไม่ทราบผู้สั่ง"}
+                        </p>
+                        <p className="u-fig mt-0.5 text-caption text-ink-soft">
+                          {new Date(o.createdAt).toLocaleDateString("th-TH", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </li>
+                    );
+                  })}
+                  {!loading && orders.length === 0 && (
+                    <li className="px-4 py-8 text-center text-small text-ink-mid">ยังไม่มีคำสั่งซื้อ</li>
+                  )}
+                </ul>
+                {orders.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllOrders((v) => !v)}
+                    aria-expanded={showAllOrders}
+                    className="mt-1 inline-flex min-h-[40px] items-center font-display text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
+                  >
+                    {showAllOrders ? "ย่อรายการ" : `ดูทั้งหมด ${orders.length} คำสั่งซื้อ`}
+                  </button>
+                )}
+              </section>
+            </div>
+          </div>
+        </Sheet>
+      </main>
+
+      <SiteFoot />
+    </div>
+  );
+}
+
+function RowActions({
+  confirmKey,
+  confirming,
+  setConfirming,
+  onDelete,
+  editHref,
+  label,
+  align,
+}: {
+  id: number;
+  confirmKey: string;
+  confirming: string | null;
+  setConfirming: (v: string | null) => void;
+  onDelete: () => void;
+  editHref: string;
+  label: string;
+  align: "start" | "end";
+}) {
+  const justify = align === "end" ? "justify-end" : "justify-start";
+
+  if (confirming === confirmKey) {
+    return (
+      <div className={`flex flex-wrap items-center gap-2 ${justify}`}>
+        <span className="text-caption text-ink-mid">ลบถาวร?</span>
+        <Button size="sm" tone="danger" onClick={onDelete}>
+          ลบ
+        </Button>
+        <Button size="sm" tone="quiet" onClick={() => setConfirming(null)}>
+          ยกเลิก
+        </Button>
+      </div>
+    );
   }
 
-  // ... (ส่วน return JSX แทรกลงไปเหมือนเดิมทั้งหมด ไม่ต้องแก้ UI เลยครับ)
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 relative">
-      <NavbarGlobal />
-      
-      <div className="max-w-6xl mx-auto px-4 pt-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-100 flex items-center gap-4">
-            <div className="p-4 bg-blue-50 rounded-full text-blue-600">
-              <Users size={32} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Top Buyer (ลูกค้าอันดับ 1)</p>
-              <h3 className="text-xl font-bold text-gray-800">{topBuyer.name}</h3>
-              <p className="text-blue-600 font-semibold">ยอดซื้อสะสม: ฿{topBuyer.amount?.toLocaleString()}</p>
-            </div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-green-100 flex items-center gap-4">
-            <div className="p-4 bg-green-50 rounded-full text-green-600">
-              <TrendingUp size={32} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Total Products</p>
-              <h3 className="text-xl font-bold text-gray-800">{posts.length} รายการ</h3>
-              <p className="text-green-600 font-semibold">In Stock & Active</p>
-            </div>
-          </div>
-        </div>
+    <div className={`flex items-center gap-4 ${justify}`}>
+      <Link
+        href={editHref}
+        className="inline-flex min-h-[40px] items-center gap-1 pr-2 text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
+      >
+        <Pencil size={13} aria-hidden /> แก้ไข
+        <span className="sr-only"> {label}</span>
+      </Link>
+      <button
+        type="button"
+        onClick={() => setConfirming(confirmKey)}
+        className="inline-flex min-h-[40px] items-center gap-1 px-2 text-caption font-semibold text-scarlet-text underline underline-offset-4"
+      >
+        <Trash2 size={13} aria-hidden /> ลบ
+        <span className="sr-only"> {label}</span>
+      </button>
+    </div>
+  );
+}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
-                  Inventory Management
-                </h2>
-                <Link href="/admin/create">
-                  <button className="flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
-                    <Plus size={18} /> Add Product
-                  </button>
-                </Link>
-              </div>
-
-              <div className="flex flex-wrap gap-3 mb-6 bg-gray-50 p-4 rounded-lg">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                  <input
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search product name..."
-                  />
-                </div>
-                <select 
-                  value={category} 
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="border rounded-lg px-3 py-2 text-sm outline-none"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-                </select>
-                <button onClick={initAdminData} className="bg-gray-800 text-white px-6 py-2 rounded-lg text-sm hover:bg-black transition">
-                  Apply
-                </button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-gray-400 text-sm uppercase border-b">
-                      <th className="pb-4 font-medium">Product Name</th>
-                      <th className="pb-4 font-medium text-center">Category</th>
-                      <th className="pb-4 font-medium text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y text-sm">
-                    {posts.map((post) => (
-                      <tr key={post.id} className="hover:bg-gray-50 transition">
-                        <td className="py-4 font-medium text-gray-800">{post.title}</td>
-                        <td className="py-4 text-center">
-                          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs italic">
-                            {post.category?.name}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right space-x-3">
-                          <Link href={`/admin/edit/${post.id}`} className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1">
-                            <Edit3 size={16} /> Edit
-                          </Link>
-                          <button onClick={() => handleDelete('posts', post.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-1">
-                            <Trash2 size={16} /> Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-               <h2 className="text-xl font-bold mb-6">Sales Performance</h2>
-               <div className="h-[300px]">
-                 <Bar data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
-               </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-lg">Categories</h2>
-                <Link href="/admin/createcategory">
-                  <Plus size={20} className="text-blue-600 cursor-pointer" />
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {categories.map((cat) => (
-                  <div key={cat.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg group">
-                    <span className="font-medium text-gray-700">{cat.name}</span>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Link href={`/admin/editcategory/${cat.id}`}>
-                        <Edit3 size={16} className="text-gray-400 hover:text-blue-600" />
-                      </Link>
-                      <button onClick={() => handleDelete('categories', cat.id)}>
-                        <Trash2 size={16} className="text-gray-400 hover:text-red-600" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-lg flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-blue-600"/>
-                  Recent Orders
-                </h2>
-                <button 
-                  onClick={() => setIsOrderModalOpen(true)} 
-                  className="text-sm text-blue-600 hover:underline outline-none"
-                >
-                  View All
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {orders.length > 0 ? (
-                  orders.slice(0, 3).map((order, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col gap-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-gray-800">{order.id}</span>
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          order.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600 flex justify-between">
-                        <span>{order.customer}</span>
-                        <span className="font-semibold text-gray-900">฿{order.total.toLocaleString()}</span>
-                      </div>
-                      <p className="text-xs text-gray-400 text-right">{order.date}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">กำลังโหลดข้อมูลสั่งซื้อ...</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {isOrderModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <ShoppingBag size={24} className="text-blue-600" />
-                All Orders History
-              </h2>
-              <button 
-                onClick={() => setIsOrderModalOpen(false)} 
-                className="text-gray-400 hover:text-red-500 transition outline-none"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto">
-              <table className="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                  <tr className="text-gray-400 text-sm uppercase border-b">
-                    <th className="pb-4 font-medium">Order ID</th>
-                    <th className="pb-4 font-medium">Customer</th>
-                    <th className="pb-4 font-medium">Date</th>
-                    <th className="pb-4 font-medium">Status</th>
-                    <th className="pb-4 font-medium text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-sm">
-                  {orders.map((order, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition">
-                      <td className="py-4 font-medium text-gray-800">{order.id}</td>
-                      <td className="py-4">{order.customer}</td>
-                      <td className="py-4 text-gray-500">{order.date}</td>
-                      <td className="py-4">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          order.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-4 text-right font-semibold">฿{order.total.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {orders.length === 0 && (
-                 <div className="text-center py-8 text-gray-500">ไม่มีข้อมูลการสั่งซื้อ</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+function Figure({
+  label,
+  value,
+  note,
+  text = false,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  text?: boolean;
+}) {
+  return (
+    <div className="bg-stock px-4 py-4">
+      <dt className="u-label">{label}</dt>
+      <dd
+        className={`mt-1 truncate font-display font-bold ${
+          text ? "text-lead" : "u-fig text-h3"
+        }`}
+      >
+        {value}
+      </dd>
+      {note && <p className="mt-1 truncate text-caption text-ink-soft">{note}</p>}
     </div>
   );
 }

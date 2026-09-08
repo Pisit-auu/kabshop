@@ -1,41 +1,37 @@
-import { prisma } from "../../lib/prisma"
+import { prisma } from "../../lib/prisma";
+import { requireAdmin, fail } from "../../lib/guard";
 
-export const runtime = "nodejs"
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
+/** Revenue per product, computed from order items rather than a cached column. */
 export async function GET() {
   try {
-    // 1. ดึงข้อมูลยอดขายโดยใช้ groupBy (ถอด select ออกเพื่อให้ TS ไม่ Error)
-    const salesData = await prisma.orderItem.groupBy({
-      by: ['postId'],
-      _sum: {
-        totalPrice: true
-      }
-    });
+    await requireAdmin();
 
-    // 2. ดึงข้อมูลชื่อผลิตภัณฑ์
+    const grouped = await prisma.orderItem.groupBy({
+      by: ["postId"],
+      _sum: { totalPrice: true, quantity: true },
+    });
+    if (grouped.length === 0) return Response.json([]);
+
     const posts = await prisma.post.findMany({
-      where: {
-        id: {
-          in: salesData.map(item => item.postId)
-        }
-      }
+      where: { id: { in: grouped.map((g) => g.postId) } },
+      select: { id: true, title: true },
     });
+    const titleById = new Map(posts.map((p) => [p.id, p.title]));
 
-    // 3. จับคู่ข้อมูลยอดขายกับชื่อผลิตภัณฑ์
-    const formattedSalesData = salesData.map(item => {
-      const post = posts.find(p => p.id === item.postId);
-      return {
-        productName: post?.title || 'Unknown',
-        totalSales: item._sum.totalPrice || 0
-      };
-    });
+    const rows = grouped
+      .map((g) => ({
+        postId: g.postId,
+        title: titleById.get(g.postId) ?? "สินค้าที่ถูกลบแล้ว",
+        revenue: g._sum.totalPrice ?? 0,
+        units: g._sum.quantity ?? 0,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
 
-    return new Response(JSON.stringify(formattedSalesData), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    return Response.json(rows);
   } catch (error) {
-    console.error('Error fetching sales data:', error);
-    return new Response('Failed to fetch sales data', { status: 500 });
+    return fail(error, "โหลดข้อมูลยอดขายไม่สำเร็จ");
   }
 }

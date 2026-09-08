@@ -1,40 +1,23 @@
+import { prisma } from "../../lib/prisma";
+import { requireUser, fail } from "../../lib/guard";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-import { prisma } from "../../lib/prisma"
-export const runtime = "nodejs"
-
-// GET method for fetching orders by userId
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const userId = url.searchParams.get('userId');
-
-  if (!userId) {
-    return new Response('User ID is required', { status: 400 });
-  }
-
+/**
+ * Your own purchase history. The user id comes from the session; the old
+ * route took it from a query string, so any id returned anyone's orders.
+ */
+export async function GET() {
   try {
+    const me = await requireUser();
     const orders = await prisma.order.findMany({
-      where: { userId: Number(userId) },
-      include: {
-        items: {
-          include: {
-            post: {
-              select: {
-                title: true,
-                img: true,
-              },
-            },
-          },
-        },
-      },
+      where: { userId: me.id },
+      orderBy: { createdAt: "desc" },
+      include: { items: { include: { post: { select: { title: true, img: true } } } } },
     });
-
-    return new Response(JSON.stringify(orders), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return Response.json(orders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    return new Response('Failed to fetch orders', { status: 500 });
+    return fail(error, "โหลดประวัติการสั่งซื้อไม่สำเร็จ");
   }
 }

@@ -1,29 +1,33 @@
-import { prisma } from "../../lib/prisma"
-export const runtime = "nodejs"
+import { prisma } from "../../lib/prisma";
+import { requireAdmin, fail, textOrFail, HttpError } from "../../lib/guard";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const categories = await prisma.category.findMany()
-    return Response.json(categories)
+    const categories = await prisma.category.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { posts: true } } },
+    });
+    return Response.json(categories);
   } catch (error) {
-    return new Response(error as BodyInit, {
-      status: 500,
-    })
+    return fail(error, "โหลดหมวดหมู่ไม่สำเร็จ");
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { name } = await req.json()
-    const newCategory = await prisma.category.create({
-      data: {
-        name
-      },
-    })
-    return Response.json(newCategory)
+    await requireAdmin();
+    const body = await request.json().catch(() => ({}));
+    const name = textOrFail(body.name, "ชื่อหมวดหมู่", { max: 60 });
+
+    const existing = await prisma.category.findUnique({ where: { name } });
+    if (existing) throw new HttpError(409, `มีหมวดหมู่ "${name}" อยู่แล้ว`);
+
+    const category = await prisma.category.create({ data: { name } });
+    return Response.json(category, { status: 201 });
   } catch (error) {
-    return new Response(error as BodyInit, {
-      status: 500,
-    })
+    return fail(error, "สร้างหมวดหมู่ไม่สำเร็จ");
   }
 }

@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T00:00:00.000Z",
+  "title": "Design System: KABSHOP",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Newsprint",
+        "canonical": "#edebe4",
+        "note": "Page ground. Printed with a two-axis repeating-gradient fibre tooth at ~2% ink opacity so it reads as stock, not as flat grey.",
+        "tonalRamp": ["#26251f", "#3d3b32", "#565348", "#736f61", "#948f7e", "#b6b1a0", "#d5d1c4", "#f4f2ec"]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "Deep Newsprint",
+        "canonical": "#e3e0d6",
+        "tonalRamp": ["#242219", "#3a382c", "#524f40", "#6e6a58", "#8e8a75", "#b0ab95", "#cfcab8", "#efece2"]
+      },
+      "stock": {
+        "role": "neutral",
+        "displayName": "Cell Stock",
+        "canonical": "#fbfaf7",
+        "tonalRamp": ["#27251f", "#3e3c33", "#575449", "#747060", "#95917f", "#b7b3a2", "#d7d3c6", "#f7f5ef"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Soft Black",
+        "canonical": "#191813",
+        "note": "All primary text, the masthead bar, heavy rules, reversed-type marks. Warm — never #000.",
+        "tonalRamp": ["#191813", "#2e2c25", "#454239", "#5e5a4e", "#7a7566", "#9b9686", "#c0bbab", "#e6e2d8"]
+      },
+      "ink-mid": {
+        "role": "neutral",
+        "displayName": "Mid Ink",
+        "canonical": "#57554a",
+        "tonalRamp": ["#1c1b17", "#2f2e27", "#454339", "#57554a", "#75725f", "#98947f", "#bfbba7", "#e5e2d6"]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "#656358",
+        "tonalRamp": ["#201f1a", "#34322b", "#4a483d", "#656358", "#83806e", "#a5a18c", "#c8c4b1", "#eae7dd"]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#c9c6b8",
+        "note": "The default 1px rule and the colour a gap-px grid gutter shows through.",
+        "tonalRamp": ["#232219", "#39372c", "#514e40", "#6d6a58", "#8d8975", "#afaa95", "#c9c6b8", "#eeece4"]
+      },
+      "rule-mid": {
+        "role": "neutral",
+        "displayName": "Heavy Hairline",
+        "canonical": "#ada99a",
+        "tonalRamp": ["#211f18", "#36342a", "#4d4a3d", "#686454", "#88836f", "#ada99a", "#cbc8bb", "#eae8e0"]
+      },
+      "scarlet": {
+        "role": "primary",
+        "displayName": "Section Scarlet",
+        "canonical": "#c81e24",
+        "note": "Default section ink, and the fixed danger/alarm role in every section.",
+        "tonalRamp": ["#320507", "#520a0d", "#751115", "#9a171c", "#c81e24", "#e04a4f", "#ee8b8e", "#fbd3d5"]
+      },
+      "scarlet-text": {
+        "role": "primary",
+        "displayName": "Scarlet On Paper",
+        "canonical": "#a81318",
+        "note": "The on-newsprint legible variant used for destructive labels and links."
+      },
+      "cobalt": {
+        "role": "secondary",
+        "displayName": "Back-Office Cobalt",
+        "canonical": "#1240c4",
+        "note": "Pinned section for every /admin route and the profile form. Its -text variant is the same value.",
+        "tonalRamp": ["#050f31", "#081a52", "#0b2678", "#0e339d", "#1240c4", "#3d67dd", "#7d99ec", "#ccd8f9"]
+      },
+      "jade": {
+        "role": "tertiary",
+        "displayName": "Completion Jade",
+        "canonical": "#0b6b4f",
+        "note": "Order history, the receipt header flood, the grand total, and the ok flash.",
+        "tonalRamp": ["#031b14", "#052d21", "#07452f", "#095840", "#0b6b4f", "#149073", "#4fbb9c", "#c3e8dc"]
+      },
+      "jade-text": {
+        "role": "tertiary",
+        "displayName": "Jade On Paper",
+        "canonical": "#0a5f46"
+      },
+      "chrome": {
+        "role": "tertiary",
+        "displayName": "Section Chrome",
+        "canonical": "#e9a400",
+        "note": "The one light ink: reverses to soft black rather than white.",
+        "tonalRamp": ["#3a2900", "#5c4200", "#845e00", "#ab7b00", "#e9a400", "#f5be3c", "#fad681", "#fdf0cd"]
+      },
+      "chrome-text": {
+        "role": "tertiary",
+        "displayName": "Chrome On Paper",
+        "canonical": "#8a5a00",
+        "note": "Heavily darkened; the raw amber is unreadable on newsprint."
+      },
+      "section-on": {
+        "role": "neutral",
+        "displayName": "Reversed",
+        "canonical": "#ffffff",
+        "note": "Foreground on a flooded section ink. Resolves to soft black under chrome."
+      }
+    },
+    "typographyMeta": {
+      "masthead": { "displayName": "Masthead", "purpose": "The KABSHOP nameplate on the front page only — and that page's h1." },
+      "h1": { "displayName": "Display", "purpose": "Route titles at sm and up; product names on wide screens." },
+      "h2": { "displayName": "Headline", "purpose": "Default RunningHead title, auth-frame headings, receipt confirmation." },
+      "h3": { "displayName": "Title", "purpose": "The rack's live section name; the checkout grand total." },
+      "h4": { "displayName": "Subtitle", "purpose": "Product cell price, back-office section headings, order serial." },
+      "base": { "displayName": "Body", "purpose": "Product descriptions and input text; prose capped at 68ch." },
+      "small": { "displayName": "Small", "purpose": "The workhorse: cell titles, rows, metadata, button labels." },
+      "caption": { "displayName": "Caption", "purpose": "Notes under figures, breadcrumbs, helper text." },
+      "label": { "displayName": "Label", "purpose": "Uppercase Kanit eyebrow for field labels, dt terms, section flags." },
+      "figure": { "displayName": "Figure", "purpose": "Every number in the product — price, stock, quantity, phone, serial — in tabular lining Kanit." }
+    },
+    "shadows": [
+      { "name": "pressure-section", "value": "inset 0 -3px 0 rgba(0,0,0,0.34)", "purpose": "Hover on a filled section-ink or scarlet control. Pressure, not elevation." },
+      { "name": "pressure-ink", "value": "inset 0 -3px 0 rgba(255,255,255,0.28)", "purpose": "Hover on a filled soft-black control — the same gesture reversed out." },
+      { "name": "spine", "value": "inset 1px 0 0 var(--rule)", "purpose": "Structural, not stateful: the vertical registration rule down every Sheet." }
+    ],
+    "motion": [
+      { "name": "ease-press", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The only easing curve in the system. Fast out, long settle — a stamp landing." },
+      { "name": "rule-draw", "value": "scaleX(0) -> scaleX(1) over 520ms ease-press, transform-origin left", "purpose": "Rules draw themselves left to right. Used by PageLoading's three staggered bars (0/90/180ms)." },
+      { "name": "ink-settle", "value": "opacity 0 + translateY(6px) -> none over 420ms ease-press", "purpose": "Product cells arriving in the rack, staggered 26ms per cell and capped at 12 cells." },
+      { "name": "flash-in", "value": "opacity 0 + translateY(-8px) -> none over 260ms ease-press", "purpose": "Flash messages dropping in from the top edge; also the index drawer." },
+      { "name": "state-150", "value": "150ms ease-press", "purpose": "Default duration for colour, border and box-shadow state changes on controls." },
+      { "name": "section-300", "value": "300ms ease-press", "purpose": "Flash rules re-inking when the live section changes." },
+      { "name": "reduced-motion", "value": "prefers-reduced-motion: reduce -> all animation and transition durations forced to 0.01ms", "purpose": "Global honour of the OS setting." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "sheet", "value": "1240px (max content width)" },
+      { "name": "column", "value": "980px (single-column pages)" },
+      { "name": "narrow", "value": "720px (receipt, error states)" },
+      { "name": "measure", "value": "68ch (running prose)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Section Button",
+      "kind": "button",
+      "refersTo": "button-section",
+      "description": "The primary affirmative. Flooded with the live section ink; hover presses an inset bar into its bottom edge.",
+      "html": "<button class=\"ds-btn-section\">ยืนยันสั่งซื้อ</button>",
+      "css": ".ds-btn-section { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px; background: var(--section-fill, #c81e24); color: var(--section-on, #fff); border: 1px solid var(--section-fill, #c81e24); border-radius: 0; font-family: Kanit, system-ui, sans-serif; font-weight: 600; font-size: 14px; line-height: 22px; letter-spacing: 0.01em; cursor: pointer; transition: box-shadow 150ms cubic-bezier(0.16,1,0.3,1), background-color 150ms cubic-bezier(0.16,1,0.3,1), transform 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-section:hover { box-shadow: inset 0 -3px 0 rgba(0,0,0,0.34); } .ds-btn-section:active { transform: translateY(1px); } .ds-btn-section:focus-visible { outline: 2px solid var(--section-fill, #c81e24); outline-offset: 2px; } .ds-btn-section:disabled { background: #e3e0d6; color: #656358; border-color: #ada99a; box-shadow: none; pointer-events: none; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "The secondary action: an outline that inverts to a solid ink block on hover.",
+      "html": "<button class=\"ds-btn-quiet\">ดูประวัติสั่งซื้อ</button>",
+      "css": ".ds-btn-quiet { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px; background: transparent; color: #191813; border: 1px solid #191813; border-radius: 0; font-family: Kanit, system-ui, sans-serif; font-weight: 600; font-size: 14px; line-height: 22px; letter-spacing: 0.01em; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16,1,0.3,1), color 150ms cubic-bezier(0.16,1,0.3,1), transform 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-quiet:hover { background: #191813; color: #edebe4; } .ds-btn-quiet:active { transform: translateY(1px); } .ds-btn-quiet:focus-visible { outline: 2px solid var(--section-fill, #c81e24); outline-offset: 2px; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A compositor's slug: a hairline box sitting on a thick soft-black baseline. Focus takes the live section ink on all four edges.",
+      "html": "<span class=\"ds-field-wrap\"><label class=\"ds-label\" for=\"ds-f1\">ชื่อ-นามสกุล</label><input class=\"ds-field\" id=\"ds-f1\" placeholder=\"กรอกชื่อผู้รับ\" /></span>",
+      "css": ".ds-field-wrap { display: block; max-width: 360px; } .ds-label { display: block; margin-bottom: 8px; font-family: Kanit, system-ui, sans-serif; font-weight: 600; font-size: 11px; line-height: 14px; letter-spacing: 0.09em; text-transform: uppercase; color: #57554a; } .ds-field { width: 100%; background: #fbfaf7; border: 1px solid #ada99a; border-bottom-width: 2px; border-bottom-color: #191813; border-radius: 0; color: #191813; padding: 11px 12px; font-family: Sarabun, system-ui, sans-serif; font-size: 16px; line-height: 24px; transition: border-color 160ms cubic-bezier(0.16,1,0.3,1), background-color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-field::placeholder { color: #656358; } .ds-field:hover { border-color: #57554a; border-bottom-color: #191813; } .ds-field:focus { border-color: var(--section-fill, #c81e24); border-bottom-color: var(--section-fill, #c81e24); outline: none; }"
+    },
+    {
+      "name": "Product Cell",
+      "kind": "card",
+      "refersTo": "cell",
+      "description": "The classified cell. A section-ink shoulder, a 4:3 image well, then a ruled text block with the price set largest at the foot.",
+      "html": "<a class=\"ds-cell\" href=\"#\"><span class=\"ds-cell-shoulder\"></span><span class=\"ds-cell-well\"><span class=\"ds-mark\">เหลือ 2 ชิ้น</span></span><span class=\"ds-cell-body\"><span class=\"ds-cell-cat\">เครื่องเขียน</span><span class=\"ds-cell-title\">สมุดโน้ตปกแข็ง A5 เย็บกี่</span><span class=\"ds-cell-price\"><span class=\"ds-baht\">฿</span>189</span></span></a>",
+      "css": ".ds-cell { display: flex; flex-direction: column; width: 240px; background: #fbfaf7; border-radius: 0; text-decoration: none; color: #191813; transition: background-color 200ms cubic-bezier(0.16,1,0.3,1); } .ds-cell:hover { background: #fff; } .ds-cell:hover .ds-cell-title { text-decoration: underline; } .ds-cell-shoulder { display: block; height: 3px; background: var(--section-fill, #c81e24); } .ds-cell-well { position: relative; display: block; aspect-ratio: 4 / 3; background: #e3e0d6; } .ds-mark { position: absolute; left: 0; top: 0; display: inline-flex; align-items: center; padding: 2px 6px; background: #c81e24; color: #fff; font-family: Kanit, system-ui, sans-serif; font-size: 11px; font-weight: 600; line-height: 15px; letter-spacing: 0.08em; text-transform: uppercase; } .ds-cell-body { display: flex; flex-direction: column; flex: 1; border-top: 1px solid #c9c6b8; padding: 12px; } .ds-cell-cat { font-family: Kanit, system-ui, sans-serif; font-size: 11px; font-weight: 600; line-height: 14px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--section-text, #a81318); margin-bottom: 6px; } .ds-cell-title { font-family: Sarabun, system-ui, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.35; } .ds-cell-price { margin-top: 12px; font-family: Kanit, system-ui, sans-serif; font-weight: 700; font-size: 21px; line-height: 27px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums lining; } .ds-baht { opacity: 0.55; margin-right: 0.12em; }"
+    },
+    {
+      "name": "Category Index Cell",
+      "kind": "chip",
+      "refersTo": "index-cell-active",
+      "description": "The rack's table of contents. Ruled cells carrying a category name and its count; the active cell floods with the section ink.",
+      "html": "<span class=\"ds-index\"><button class=\"ds-index-cell ds-index-cell--on\" aria-pressed=\"true\">ทั้งหมด <span class=\"ds-index-n\">48</span></button><button class=\"ds-index-cell\" aria-pressed=\"false\">เครื่องเขียน <span class=\"ds-index-n\">12</span></button><button class=\"ds-index-cell\" aria-pressed=\"false\">ของใช้ในบ้าน <span class=\"ds-index-n\">9</span></button></span>",
+      "css": ".ds-index { display: flex; flex-wrap: wrap; border-top: 2px solid #191813; border-bottom: 2px solid #191813; } .ds-index-cell { display: flex; align-items: baseline; gap: 8px; min-height: 46px; padding: 0 16px; background: transparent; color: #191813; border: 0; border-right: 1px solid #c9c6b8; border-radius: 0; font-family: Kanit, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 200ms cubic-bezier(0.16,1,0.3,1), color 200ms cubic-bezier(0.16,1,0.3,1); } .ds-index-cell:hover { background: #e3e0d6; } .ds-index-cell--on, .ds-index-cell--on:hover { background: var(--section-fill, #c81e24); color: var(--section-on, #fff); } .ds-index-cell:focus-visible { outline: 2px solid var(--section-fill, #c81e24); outline-offset: -2px; } .ds-index-n { font-family: Kanit, system-ui, sans-serif; font-size: 12px; font-variant-numeric: tabular-nums lining; letter-spacing: -0.02em; color: #656358; } .ds-index-cell--on .ds-index-n { color: inherit; opacity: 0.8; }"
+    },
+    {
+      "name": "Running Head",
+      "kind": "nav",
+      "refersTo": "running-head",
+      "description": "The section flag that names where the reader is: a display title over the system's recurring asymmetric bar — a short section-ink run butted against a long ink run.",
+      "html": "<header class=\"ds-rh\"><h1 class=\"ds-rh-title\">ยืนยันคำสั่งซื้อ</h1><p class=\"ds-rh-meta\">ตรวจสอบที่อยู่ รายการ และยอดชำระก่อนกดยืนยัน</p><span class=\"ds-rh-bar\"><span class=\"ds-rh-bar-ink\"></span><span class=\"ds-rh-bar-rest\"></span></span></header>",
+      "css": ".ds-rh { padding: 32px 0 16px; } .ds-rh-title { margin: 0; font-family: Kanit, system-ui, sans-serif; font-weight: 800; font-size: 36px; line-height: 0.95; letter-spacing: -0.02em; color: #191813; text-wrap: balance; } .ds-rh-meta { margin: 8px 0 0; font-family: Sarabun, system-ui, sans-serif; font-size: 14px; line-height: 22px; color: #57554a; } .ds-rh-bar { display: flex; margin-top: 16px; } .ds-rh-bar-ink { width: 80px; height: 6px; background: var(--section-fill, #c81e24); transition: background-color 300ms cubic-bezier(0.16,1,0.3,1); } .ds-rh-bar-rest { flex: 1; height: 6px; background: #191813; }"
+    },
+    {
+      "name": "Notice",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "Inline alert. A printed Thai status word above the message, with an 8px colour bar on the left edge — the word carries the meaning, the bar only confirms it.",
+      "html": "<div class=\"ds-notice\" role=\"alert\"><span class=\"ds-notice-bar\"></span><span class=\"ds-notice-body\"><span class=\"ds-notice-label\">ไม่สำเร็จ</span><span class=\"ds-notice-text\">ยังขาด เบอร์โทรศัพท์ · ที่อยู่จัดส่ง — กรอกให้ครบก่อนจึงจะยืนยันคำสั่งซื้อได้</span></span></div>",
+      "css": ".ds-notice { display: flex; align-items: stretch; max-width: 520px; background: #fbfaf7; border: 1px solid #c9c6b8; border-radius: 0; } .ds-notice-bar { flex: 0 0 8px; background: #c81e24; } .ds-notice-body { display: block; padding: 12px 16px; } .ds-notice-label { display: block; font-family: Kanit, system-ui, sans-serif; font-weight: 600; font-size: 11px; line-height: 14px; letter-spacing: 0.09em; text-transform: uppercase; color: #57554a; } .ds-notice-text { display: block; margin-top: 4px; font-family: Sarabun, system-ui, sans-serif; font-size: 14px; line-height: 22px; color: #191813; }"
+    },
+    {
+      "name": "Flash",
+      "kind": "custom",
+      "refersTo": "flash",
+      "description": "The reversed-type event mark that replaced window.alert(). A fully flooded ink block split into three cells by hairlines: status word, message, dismiss.",
+      "html": "<div class=\"ds-flash\" role=\"status\"><span class=\"ds-flash-lead\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg><span class=\"ds-flash-label\">สำเร็จ</span></span><p class=\"ds-flash-text\">เพิ่มลงตะกร้าแล้ว</p><button class=\"ds-flash-x\" aria-label=\"ปิดข้อความ\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg></button></div>",
+      "css": ".ds-flash { display: flex; align-items: stretch; width: 100%; max-width: 560px; background: #0b6b4f; color: #fff; border-radius: 0; animation: ds-flash-in 260ms cubic-bezier(0.16,1,0.3,1) both; } @keyframes ds-flash-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } } .ds-flash-lead { display: flex; align-items: center; gap: 8px; padding: 12px; border-right: 1px solid rgba(255,255,255,0.25); } .ds-flash-label { font-family: Kanit, system-ui, sans-serif; font-weight: 600; font-size: 10px; line-height: 14px; letter-spacing: 0.09em; text-transform: uppercase; } .ds-flash-text { flex: 1; margin: 0; padding: 12px; font-family: Sarabun, system-ui, sans-serif; font-size: 14px; font-weight: 500; line-height: 1.375; } .ds-flash-x { padding: 0 12px; background: transparent; color: inherit; border: 0; border-left: 1px solid rgba(255,255,255,0.25); border-radius: 0; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16,1,0.3,1); } .ds-flash-x:hover { background: rgba(0,0,0,0.15); }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": "empty",
+      "description": "Names the situation and hands over the next move. A dashed-rule block on cell stock — the only dashed border outside the receipt's tear lines.",
+      "html": "<div class=\"ds-empty\"><svg class=\"ds-empty-icon\" width=\"40\" height=\"40\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.9 18.55 12 22l-8.89-3.45a2 2 0 0 1-1.11-1.79V10.5l5.5 1.5\"/><path d=\"M12 22V11\"/><path d=\"m3.29 6.36 7.31-3.28a2 2 0 0 1 1.8 0l7.31 3.28a1 1 0 0 1 .05 1.76L12.6 12.4a2 2 0 0 1-1.2 0L3.24 8.12a1 1 0 0 1 .05-1.76Z\"/></svg><h3 class=\"ds-empty-title\">ไม่พบสินค้าที่ตรงกับที่ค้นหา</h3><p class=\"ds-empty-body\">ลองใช้คำค้นที่สั้นลง หรือดูประกาศทั้งหมดของวันนี้</p><button class=\"ds-btn-quiet ds-empty-action\">ดูประกาศทั้งหมด</button></div>",
+      "css": ".ds-empty { max-width: 520px; padding: 64px 24px; background: #fbfaf7; border: 1px dashed #ada99a; border-radius: 0; text-align: center; } .ds-empty-icon { display: block; margin: 0 auto 20px; color: #656358; } .ds-empty-title { margin: 0; font-family: Kanit, system-ui, sans-serif; font-weight: 800; font-size: 21px; line-height: 27px; letter-spacing: -0.01em; color: #191813; } .ds-empty-body { margin: 8px auto 0; max-width: 42ch; font-family: Sarabun, system-ui, sans-serif; font-size: 14px; line-height: 22px; color: #57554a; } .ds-empty-action { margin-top: 28px; } .ds-btn-quiet { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 20px; background: transparent; color: #191813; border: 1px solid #191813; border-radius: 0; font-family: Kanit, system-ui, sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16,1,0.3,1), color 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-quiet:hover { background: #191813; color: #edebe4; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Classified",
+    "overview": "KABSHOP is set as the classified section of a Thai daily. A general store that carries everything has no single vertical to dress itself in, so it borrows the one layout built for exactly that problem: a ruled sheet where anything can be listed next to anything, and the reader still knows where they are. Rules are the material. Not decoration between things — the thing itself. Cells sit shoulder to shoulder separated by a single hairline; grids draw their gutters by letting a rule-coloured parent show through one-pixel gaps. Where a marketplace would float a rounded card on grey, this sheet prints a white block on newsprint and draws a line around it.\n\nThe ground is real stock. Newsprint (#edebe4) carries a two-axis repeating-gradient fibre tooth so it reads as a sheet rather than as a flat grey; cells are printed on cell stock (#fbfaf7), a lighter, cleaner white. Depth comes from that stock difference and from rule weight — hairline, 3px, 6px, border-t-2 — never from a shadow. Four flat section inks (scarlet, cobalt, jade, chrome) flood whole regions rather than tinting small ones, and only one is live at a time: it is set as a data attribute on the document root, so choosing a category re-rules the masthead flash, the index, the section head, the focus ring, the caret, the text selection and every cell shoulder in a single move.\n\nMoney is the headline. Every baht, stock count, quantity, phone number and order serial in the product is set in one numeral treatment — Kanit, tabular lining figures — on the rack, in the cart, at checkout and on the receipt alike. The price is the largest type inside a product cell, larger than the product's own name, because the trust moment in a general store is the number. Interface language is Thai throughout; Kanit and Sarabun are both loaded with the Thai subset, and the type ramp's line-heights are set generous enough for Thai ascenders and tone marks.",
+    "keyCharacteristics": [
+      "Newsprint ground with a printed fibre tooth; white cell stock on top of it.",
+      "Hairline rules as the structural material — including as grid gutters (gap-px).",
+      "Four flat section inks, one live at a time, set on the document root.",
+      "Zero border radius and zero drop shadows anywhere in the build.",
+      "One numeral treatment for every figure, storefront through receipt.",
+      "Reversed-type blocks for state; no pastel tint chips.",
+      "Thai-first typography: Kanit for display and figures, Sarabun for text."
+    ],
+    "rules": [
+      { "name": "The One Ink Rule", "body": "Exactly one section ink is live per page, set as document.documentElement.dataset.section and cleared on unmount. Never hardcode a second ink into a region to \"add colour\" — if a surface needs an ink, it reads the live one via var(--section-fill). The only inks allowed outside the live section are scarlet as the danger/alarm role and jade as the success role.", "section": "colors" },
+      { "name": "The Flood Rule", "body": "Section ink arrives as a solid flood of a whole region — a full-bleed flash rule, a filled index cell, a filled receipt header — or as a 3px–6px bar. It is never a 10% tint behind text and never a border-only accent on an otherwise neutral block.", "section": "colors" },
+      { "name": "The Reversed-Type Rule", "body": "State is printed, not tinted. Stock warnings, flash messages and status marks are solid ink blocks with reversed type; there are no pale pastel chips anywhere in the build.", "section": "colors" },
+      { "name": "The One Numeral Rule", "body": "Every figure a reader might check — price, subtotal, shipping, grand total, stock count, cart count, quantity, phone number, order serial, accumulated spend — is set with .u-fig. Same face, same tabular lining figures, same tracking, on the storefront, in the drawer, at checkout and on the printed receipt. Never let a number inherit Sarabun.", "section": "typography" },
+      { "name": "The Price-Is-The-Headline Rule", "body": "Inside a product cell the price is the largest type in the block (h4, above a 14px title); on the product page it is set at 40px in the section text ink, above everything but the product name. If a layout makes the price smaller than its neighbours, the layout is wrong.", "section": "typography" },
+      { "name": "The Single Nameplate Rule", "body": "Every route carries exactly one <h1>. On the storefront it is the masthead wordmark itself (Masthead size=\"full\" renders the wordmark as h1); every other route renders size=\"strip\", where the wordmark drops to a span and the page's own RunningHead (default as=\"h1\") supplies the heading.", "section": "typography" },
+      { "name": "The Spine Rule", "body": "Content inside a Sheet never sits flush left. It registers to the spine's hairline with a 16/24px indent, the way columns register to a margin rule.", "section": "layout" },
+      { "name": "The Hairline Gutter Rule", "body": "A grid of cells separates its cells with gap-px over a bg-rule parent. Do not add per-cell borders that would double up into 2px seams, and do not use empty space where a rule belongs.", "section": "layout" },
+      { "name": "The Pressure-Not-Lift Rule", "body": "A control under the cursor gets an inset bottom bar and, on :active, translate-y-px. It never lifts, never gains an offset block shadow, and never scales. The one scale in the system is a 1.03 image zoom inside a product cell's fixed frame, which reads as the picture moving under the crop, not the cell rising.", "section": "elevation" },
+      { "name": "The Section-On-Root Rule", "body": "A page that belongs to a section sets document.documentElement.dataset.section in an effect and deletes it on cleanup. The back office and the profile form pin cobalt; order history pins jade; the storefront and product pages hash their category name through inkFor() to one of the four. Nothing else should set section colour, and no component should accept an ink as a prop.", "section": "components" }
+    ],
+    "dos": [
+      "Do draw structure with rules at four weights — 1px rule, 3px, 6px, border-2 border-ink — and let the heaviest one frame the most important block on the page.",
+      "Do build grids as grid gap-px bg-rule with bg-stock children so the gutter is the hairline.",
+      "Do set every number with .u-fig, including phone numbers, counts and order serials.",
+      "Do read the live ink through var(--section-fill) / var(--section-text) / var(--section-on); set the section once, on the document root, and clean it up on unmount.",
+      "Do print state as a word plus a solid block — \"ไม่สำเร็จ\", \"เหลือ 2 ชิ้น\" — so colour is never the only carrier of meaning.",
+      "Do keep interactive targets at 44px or more (min-h-[46px] is the house default) and keep the section-ink :focus-visible outline visible.",
+      "Do cap running prose at 68ch with u-measure.",
+      "Do use Sheet for page width so content registers to the spine.",
+      "Do write interface copy in Thai and format numbers, dates and currency with th-TH locale formatting."
+    ],
+    "donts": [
+      "Don't add a border radius to anything. Not a card, not a button, not an avatar, not a badge. The zero-radius rule has no exceptions in the shipped build.",
+      "Don't add a drop shadow, a lift, an offset block shadow or a glow. Hover pressure is an inset bottom bar; that is the entire elevation vocabulary.",
+      "Don't tint. No 10%-opacity ink washes behind text, no pastel status chips — a section ink either floods a region or draws a bar.",
+      "Don't put two section inks on one page. Scarlet-as-danger and jade-as-success are the only inks that may appear beside the live one.",
+      "Don't hardcode an ink hex in a component (a chart dataset, an inline style) when var(--cobalt) or var(--section-fill) is available — a hardcoded hex will not re-rule when the section changes.",
+      "Don't let a product's title outweigh its price, or set money in Sarabun.",
+      "Don't render a second <h1> on a route; on the storefront the masthead nameplate is already it, so inner pages must use Masthead size=\"strip\".",
+      "Don't introduce a third typeface, a system display face, or an icon font. Kanit, Sarabun and Lucide line icons are the whole kit.",
+      "Don't drop input font-size below 16px, or remove the 2px baseline that makes a field read as a compositor's slug.",
+      "Don't call window.alert(); push a flash."
+    ]
+  }
+}

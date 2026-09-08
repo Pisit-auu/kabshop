@@ -1,152 +1,147 @@
-'use client';
+"use client";
 
-import { useSession } from "next-auth/react";
-import NavbarGlobal from "../../../components/navbarglobal";
-import axios from 'axios';
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Tag, Save, Loader2 } from "lucide-react";
+import Masthead from "../../../components/masthead";
+import SiteFoot from "../../../components/sitefoot";
+import RequireAuth from "../../../components/requireauth";
+import { useFlash } from "../../../components/flash";
+import { FormShell, Fieldset } from "../../../components/adminform";
+import { Button, ButtonLink, Label, Notice, PageLoading, Sheet } from "../../../components/press";
 
-export default function EditCategory({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditCategoryPage({ params }: { params: { id: string } }) {
+  return (
+    <RequireAuth admin>
+      <EditCategory id={params.id} />
+    </RequireAuth>
+  );
+}
+
+function EditCategory({ id }: { id: string }) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const flash = useFlash();
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
+  const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  // ดึงข้อมูลหมวดหมู่และสิทธิ์ผู้ใช้
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const categoryRes = await axios.get(`/api/categories/${id}`);
-      setName(categoryRes.data.name);
+  useEffect(() => {
+    document.documentElement.dataset.section = "cobalt";
+    return () => {
+      delete document.documentElement.dataset.section;
+    };
+  }, []);
 
-      if (session?.user?.email) {
-        const userRes = await axios.get(`/api/user/${session.user.email}`);
-        setRole(userRes.data.role || null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/categories/${id}`, { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error ?? "");
+        if (cancelled) return;
+        setName(data.name ?? "");
+        setCount(data._count?.posts ?? 0);
+      } catch (err) {
+        if (!cancelled) setLoadError(err instanceof Error && err.message ? err.message : "โหลดหมวดหมู่ไม่สำเร็จ");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch (err) {
-      setError('ไม่สามารถโหลดข้อมูลหมวดหมู่ได้');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [id, session]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // ตรวจสอบสิทธิ์การเข้าถึง
-  useEffect(() => {
-    if (status === 'unauthenticated') router.push('/home');
-    if (status === 'authenticated' && role && role !== 'admin') router.push('/home');
-  }, [status, role, router]);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!name.trim()) return;
-
-    setIsSaving(true);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
     try {
-      await axios.put(`/api/categories/${id}`, { name });
-      router.push('/admin');
+      const res = await fetch(`/api/categories/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "บันทึกไม่สำเร็จ");
+
+      flash("ok", "บันทึกชื่อหมวดหมู่แล้ว");
+      router.push("/admin");
+      router.refresh();
     } catch (err) {
-      setError('บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่');
-      setIsSaving(false);
+      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setSaving(false);
     }
   };
 
-  // แสดงผลตอนกำลังโหลดข้อมูลครั้งแรก
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      <div className="min-h-screen">
+        <Masthead />
+        <PageLoading label="กำลังโหลดหมวดหมู่" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen">
+        <Masthead />
+        <Sheet width="narrow" className="py-16">
+          <Notice>{loadError}</Notice>
+          <div className="mt-6">
+            <ButtonLink href="/admin" tone="quiet">
+              กลับหน้าจัดการร้าน
+            </ButtonLink>
+          </div>
+        </Sheet>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <NavbarGlobal />
-      
-      <div className="max-w-2xl mx-auto px-4 mt-12">
-        {/* ปุ่มย้อนกลับ */}
-        <button 
-          onClick={() => router.back()} 
-          className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors mb-6 font-medium"
-        >
-          <ChevronLeft size={20} />
-          กลับหน้าจัดการ
-        </button>
+    <div className="min-h-screen">
+      <Masthead />
+      <main>
+        <Sheet width="narrow" className="pb-20">
+          <FormShell
+            title="แก้ไขหมวดหมู่"
+            intro={`หมวดนี้มีสินค้าอยู่ ${count} รายการ การเปลี่ยนชื่อจะมีผลกับสารบัญหน้าร้านทันที`}
+          >
+            <form onSubmit={submit} noValidate className="space-y-6">
+              {error && <Notice>{error}</Notice>}
 
-        <div className="bg-white rounded-[2rem] shadow-xl shadow-blue-900/5 border border-gray-100 overflow-hidden">
-          {/* ส่วนหัว (Header) */}
-          <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
-             <div className="relative z-10 flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                   <Tag size={28} />
-                </div>
+              <Fieldset legend="ชื่อหมวดหมู่">
                 <div>
-                   <h1 className="text-2xl font-bold">แก้ไขหมวดหมู่</h1>
-                   <p className="text-blue-100 text-sm opacity-80">แก้ไขชื่อหมวดหมู่ที่แสดงบนหน้าเว็บ</p>
+                  <Label htmlFor="name">ชื่อที่แสดงบนหน้าร้าน</Label>
+                  <input
+                    id="name"
+                    required
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="u-field"
+                  />
                 </div>
-             </div>
-             {/* ตกแต่งพื้นหลังเล็กน้อย */}
-             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-          </div>
+              </Fieldset>
 
-          {/* ฟอร์มแก้ไข */}
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {error && (
-              <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-xl">
-                {error}
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" size="lg" busy={saving} disabled={!name.trim()} className="flex-1">
+                  บันทึกการเปลี่ยนแปลง
+                </Button>
+                <Button type="button" tone="quiet" size="lg" onClick={() => router.push("/admin")}>
+                  ยกเลิก
+                </Button>
               </div>
-            )}
-
-            <div className="space-y-3">
-              <label htmlFor="name" className="block text-sm font-bold text-gray-700 uppercase tracking-widest ml-1">
-                ชื่อหมวดหมู่สินค้า
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="ระบุชื่อหมวดหมู่..."
-                required
-                className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-lg shadow-inner"
-              />
-            </div>
-
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={isSaving || !name.trim()}
-                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200 disabled:bg-gray-300 disabled:shadow-none"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>กำลังบันทึก...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save size={20} />
-                    <span>บันทึกการเปลี่ยนแปลง</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-
-       
-      </div>
+            </form>
+          </FormShell>
+        </Sheet>
+      </main>
+      <SiteFoot />
     </div>
   );
 }

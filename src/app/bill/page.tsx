@@ -1,184 +1,214 @@
-'use client';
+"use client";
 
-import { useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
-import Link from 'next/link';
-import NavbarUser from '../components/navbaruser';
-import { CheckCircle2, Calendar, Hash, Package, ArrowLeft, Download, Printer, Loader2 } from "lucide-react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle2, Printer } from "lucide-react";
+import Masthead from "../components/masthead";
+import SiteFoot from "../components/sitefoot";
+import RequireAuth from "../components/requireauth";
+import { Button, ButtonLink, Money, Notice, Sheet, PageLoading } from "../components/press";
 
-interface OrderItem {
-  title: string;
-  quantity: number;
-  totalPrice: number;
-}
+const SHIPPING_COST = 36;
 
-interface OrderData {
+type Receipt = {
   orderId: string;
   createdAt: string;
-  items: OrderItem[];
+  recipient: { name: string | null; phone: string | null; address: string | null };
+  items: { postId: number; title: string; quantity: number; totalPrice: number }[];
+};
+
+export default function BillPage() {
+  return (
+    <RequireAuth>
+      <Suspense
+        fallback={
+          <div className="min-h-screen">
+            <Masthead />
+            <PageLoading label="กำลังออกใบสั่งซื้อ" />
+          </div>
+        }
+      >
+        <Bill />
+      </Suspense>
+    </RequireAuth>
+  );
 }
 
-export default function Bill() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const orderIdFromUrl = searchParams.get('orderId');
-
-  const [orderData, setOrderData] = useState<OrderData | null>(null);
+function Bill() {
+  const orderId = useSearchParams().get("orderId");
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB',
-    }).format(amount);
-  };
-
-  const fetchOrderDetails = useCallback(async (id: string) => {
+  const load = useCallback(async () => {
+    if (!orderId) {
+      setError("ไม่ได้ระบุหมายเลขคำสั่งซื้อ");
+      setLoading(false);
+      return;
+    }
     try {
-      setLoading(true);
-      const response = await axios.get(`/api/order/${id}`);
-      setOrderData(response.data);
-    } catch (error) {
-      console.error('Error fetching order details:', error);
+      const res = await fetch(`/api/order/${encodeURIComponent(orderId)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "");
+      setReceipt(data);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "โหลดคำสั่งซื้อไม่สำเร็จ");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [orderId]);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-    } else if (status === 'authenticated') {
-      if (orderIdFromUrl) {
-        fetchOrderDetails(orderIdFromUrl);
-      } else {
-        router.push('/home');
-      }
-    }
-  }, [status, orderIdFromUrl, router, fetchOrderDetails]);
+    load();
+  }, [load]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+      <div className="min-h-screen">
+        <Masthead />
+        <PageLoading label="กำลังออกใบสั่งซื้อ" />
       </div>
     );
   }
 
-  if (!orderData) {
+  if (error || !receipt) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 text-center">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-           <p className="text-red-500 font-bold text-xl mb-4">ไม่พบข้อมูลคำสั่งซื้อ</p>
-           <Link href="/home" className="text-blue-600 flex items-center gap-2 justify-center">
-             <ArrowLeft size={18} /> กลับสู่หน้าหลัก
-           </Link>
-        </div>
+      <div className="min-h-screen">
+        <Masthead />
+        <Sheet width="narrow" className="py-16">
+          <Notice>{error ?? "ไม่พบคำสั่งซื้อนี้"}</Notice>
+          <div className="mt-6 flex gap-2">
+            <ButtonLink href="/user/profile/all" tone="quiet">
+              ดูประวัติสั่งซื้อ
+            </ButtonLink>
+            <ButtonLink href="/">กลับหน้าแรก</ButtonLink>
+          </div>
+        </Sheet>
+        <SiteFoot />
       </div>
     );
   }
 
-  const { orderId, createdAt, items = [] } = orderData;
-  const shippingCost = 36;
-  const subTotal = items.reduce((total, item) => total + item.totalPrice, 0);
-  const grandTotal = subTotal + shippingCost;
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const subTotal = receipt.items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const grandTotal = subTotal + SHIPPING_COST;
+  const placedAt = new Date(receipt.createdAt).toLocaleString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <NavbarUser />
-      
-      <div className="max-w-2xl mx-auto px-4 mt-12">
-        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 overflow-hidden border border-gray-100">
-          
-          {/* Header Success Section */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-10 text-white text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4 backdrop-blur-md">
-              <CheckCircle2 size={48} />
-            </div>
-            <h1 className="text-3xl font-black mb-1">สั่งซื้อสำเร็จ!</h1>
-            <p className="text-green-50 opacity-90 font-medium">ขอบคุณที่ใช้บริการกับเรา</p>
-          </div>
+    <div className="min-h-screen">
+      <Masthead />
 
-          <div className="p-8 md:p-12">
-            {/* Meta Info */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
-                  <Hash size={12} /> หมายเลขคำสั่งซื้อ
-                </p>
-                <p className="font-mono font-bold text-gray-800 tracking-tighter">{orderId}</p>
+      <main>
+        <Sheet width="narrow" className="pb-20 pt-10">
+          {/* The receipt: a printed document of record, torn from the sheet. */}
+          <article className="bg-stock border-x border-rule">
+            <div className="h-1 border-t-2 border-dashed border-rule-mid" aria-hidden />
+
+            <header className="bg-[var(--jade)] px-6 py-8 text-center text-white sm:px-10">
+              <CheckCircle2 size={36} strokeWidth={2} aria-hidden className="mx-auto" />
+              <h1 className="u-display mt-3 text-h2 leading-tight">รับคำสั่งซื้อแล้ว</h1>
+              <p className="mt-2 text-small text-white/85">
+                ทางร้านได้รับคำสั่งซื้อของคุณเรียบร้อย และจะติดต่อกลับเพื่อยืนยันการจัดส่ง
+              </p>
+            </header>
+
+            <div className="px-6 py-8 sm:px-10">
+              <dl className="grid grid-cols-1 gap-px border border-rule bg-rule sm:grid-cols-2">
+                <div className="bg-stock px-4 py-3">
+                  <dt className="u-label">หมายเลขคำสั่งซื้อ</dt>
+                  <dd className="u-fig mt-1 text-h4 font-bold">{receipt.orderId}</dd>
+                </div>
+                <div className="bg-stock px-4 py-3">
+                  <dt className="u-label">วันที่สั่งซื้อ</dt>
+                  <dd className="mt-1 text-small font-semibold">{placedAt}</dd>
+                </div>
+              </dl>
+
+              {receipt.recipient.name && (
+                <section className="mt-6">
+                  <h2 className="u-label mb-2">จัดส่งถึง</h2>
+                  <address className="not-italic text-small text-ink-mid">
+                    <span className="block font-semibold text-ink">{receipt.recipient.name}</span>
+                    {receipt.recipient.phone && <span className="u-fig mt-1 block">{receipt.recipient.phone}</span>}
+                    {receipt.recipient.address && (
+                      <span className="mt-1 block whitespace-pre-line">{receipt.recipient.address}</span>
+                    )}
+                  </address>
+                </section>
+              )}
+
+              <section className="mt-8">
+                <h2 className="u-label mb-3">รายการสินค้า</h2>
+                <ul className="border-y-2 border-ink">
+                  {receipt.items.map((item) => (
+                    <li
+                      key={item.postId}
+                      className="flex items-start justify-between gap-4 border-b border-dashed border-rule-mid py-3 last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-small font-semibold">{item.title}</p>
+                        <p className="mt-0.5 text-caption text-ink-mid">
+                          จำนวน <span className="u-fig">{item.quantity}</span> ชิ้น
+                        </p>
+                      </div>
+                      <Money value={item.totalPrice} className="text-base" />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <dl className="mt-6 text-small">
+                <div className="flex justify-between gap-4 py-2">
+                  <dt className="text-ink-mid">ราคารวมสินค้า</dt>
+                  <dd>
+                    <Money value={subTotal} />
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4 border-b border-rule py-2">
+                  <dt className="text-ink-mid">ค่าจัดส่ง</dt>
+                  <dd>
+                    <Money value={SHIPPING_COST} />
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b-2 border-ink py-4">
+                  <dt className="font-display text-base font-bold">ยอดรวมสุทธิ</dt>
+                  <dd>
+                    <Money value={grandTotal} className="text-h2 text-[var(--jade-text)]" />
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="mt-8 flex flex-wrap gap-2 print:hidden">
+                <ButtonLink href="/" tone="ink" size="lg" className="flex-1">
+                  เลือกซื้อสินค้าต่อ
+                </ButtonLink>
+                <Button tone="quiet" size="lg" onClick={() => window.print()}>
+                  <Printer size={17} aria-hidden /> พิมพ์
+                </Button>
               </div>
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
-                  <Calendar size={12} /> วันที่สั่งซื้อ
-                </p>
-                <p className="font-bold text-gray-800 text-sm">{formatDate(createdAt)}</p>
-              </div>
+
+              <p className="mt-6 text-caption text-ink-soft">
+                เก็บหมายเลขคำสั่งซื้อไว้อ้างอิงเมื่อติดต่อทางร้าน ดูรายการทั้งหมดได้ที่{" "}
+                <a
+                  href="/user/profile/all"
+                  className="font-semibold underline decoration-rule-mid underline-offset-4 hover:decoration-ink"
+                >
+                  ประวัติสั่งซื้อ
+                </a>
+              </p>
             </div>
 
-            {/* Items List */}
-            <div className="space-y-4 mb-8">
-              <h3 className="text-gray-800 font-bold flex items-center gap-2 mb-4">
-                <Package size={20} className="text-blue-500" /> รายการสินค้า
-              </h3>
-              <div className="divide-y divide-dashed divide-gray-200 border-y border-dashed py-4">
-                {items.map((item, index) => (
-                  <div key={index} className="py-3 flex justify-between items-start">
-                    <div className="flex-1 pr-4">
-                      <p className="font-bold text-gray-800">{item.title}</p>
-                      <p className="text-sm text-gray-500">x{item.quantity}</p>
-                    </div>
-                    <p className="font-bold text-gray-900">{formatCurrency(item.totalPrice)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="h-1 border-b-2 border-dashed border-rule-mid" aria-hidden />
+          </article>
+        </Sheet>
+      </main>
 
-            {/* Summary */}
-            <div className="space-y-3 mb-10">
-              <div className="flex justify-between text-gray-600 font-medium">
-                <span>ราคารวมสินค้า</span>
-                <span>{formatCurrency(subTotal)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600 font-medium">
-                <span>ค่าจัดส่ง</span>
-                <span>{formatCurrency(shippingCost)}</span>
-              </div>
-              <div className="pt-4 mt-4 border-t-2 border-gray-100 flex justify-between items-center">
-                <span className="text-xl font-bold text-gray-900">ยอดชำระสุทธิ</span>
-                <span className="text-3xl font-black text-green-600">{formatCurrency(grandTotal)}</span>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="grid grid-cols-1 gap-3">
-              <Link href="/home" className="w-full">
-                <button className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-black transition-all active:scale-[0.98] shadow-xl shadow-gray-200">
-                  กลับสู่หน้าหลัก
-                </button>
-              </Link>
-             
-            </div>
-
-            <p className="text-center text-gray-400 text-xs mt-10 italic">
-               หากมีข้อสงสัยเกี่ยวกับคำสั่งซื้อ โปรดติดต่อฝ่ายบริการลูกค้าของเรา
-            </p>
-          </div>
-        </div>
-      </div>
+      <SiteFoot />
     </div>
   );
 }

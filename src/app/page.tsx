@@ -1,17 +1,18 @@
-'use client'
-import Link from "next/link";
-import Navbar from "./components/navbar";
-import axios from 'axios'
-import React, { useEffect, useState } from 'react'
-import Homepro from "./components/products"
-export default function Home() {
+import Masthead from "./components/masthead";
+import Rack from "./components/rack";
+import { Sheet } from "./components/press";
+import SiteFoot from "./components/sitefoot";
 
+export default function Storefront() {
   return (
-    
     <div className="min-h-screen">
-      {/* bg-gray-100 text-gray-900 */}
-      <Navbar  />
-      <Homepro />
+      <Masthead size="full" />
+      <main>
+        <Sheet className="pb-20 pt-8">
+          <Rack />
+        </Sheet>
+      </main>
+      <SiteFoot />
     </div>
   );
 }

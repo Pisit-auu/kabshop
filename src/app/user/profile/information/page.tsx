@@ -1,223 +1,207 @@
-'use client'
+"use client";
 
-import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { Check, X } from "lucide-react";
+import Masthead from "../../../components/masthead";
+import SiteFoot from "../../../components/sitefoot";
 import Sidebar from "../../../components/sidebar";
-import NavbarUser from "../../../components/navbaruser";
-import axios from "axios";
-import { User, Mail, Phone, MessageSquare, MapPin, Pencil, Check, X, Loader2, KeyRound, Lock } from "lucide-react";
-import Link from "next/link";
-export default function Information() {
-  const { data: session, status } = useSession();
+import RequireAuth from "../../../components/requireauth";
+import { useMe } from "../../../components/me";
+import { useFlash } from "../../../components/flash";
+import { Button, RunningHead, Sheet } from "../../../components/press";
+
+type FieldKey = "name" | "email" | "phone" | "lineid" | "address";
+
+const FIELDS: {
+  key: FieldKey;
+  label: string;
+  hint?: string;
+  type: string;
+  multiline?: boolean;
+  autoComplete: string;
+  placeholder: string;
+}[] = [
+  { key: "name", label: "ชื่อ-นามสกุล", type: "text", autoComplete: "name", placeholder: "สมชาย ใจดี" },
+  {
+    key: "email",
+    label: "อีเมล",
+    hint: "เปลี่ยนแล้วต้องเข้าสู่ระบบใหม่",
+    type: "email",
+    autoComplete: "email",
+    placeholder: "you@example.com",
+  },
+  { key: "phone", label: "เบอร์โทรศัพท์", type: "tel", autoComplete: "tel", placeholder: "08x-xxx-xxxx" },
+  { key: "lineid", label: "Line ID", type: "text", autoComplete: "off", placeholder: "ไม่บังคับ" },
+  {
+    key: "address",
+    label: "ที่อยู่จัดส่ง",
+    type: "text",
+    multiline: true,
+    autoComplete: "street-address",
+    placeholder: "บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์",
+  },
+];
+
+export default function InformationPage() {
+  return (
+    <RequireAuth>
+      <Information />
+    </RequireAuth>
+  );
+}
+
+function Information() {
   const router = useRouter();
+  const flash = useFlash();
+  const { me, refresh } = useMe();
 
-  const [userData, setUserData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [savingField, setSavingField] = useState<string | null>(null);
-  
-  // State สำหรับ Modal เปลี่ยนรหัสผ่าน (เผื่อคุณนำไปใช้ทำต่อ)
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
-  const [editMode, setEditMode] = useState<Record<string, boolean>>({
-    name: false, email: false, phone: false, lineid: false, address: false
-  });
-
-  const [formData, setFormData] = useState({
-    name: "", email: "", phone: "", lineid: "", address: ""
-  });
-
-  const fetchUser = useCallback(async () => {
-    if (!session?.user?.email) return;
-    try {
-      const response = await axios.get(`/api/user/${session.user.email}`);
-      setUserData(response.data);
-      setFormData({
-        name: response.data.name || "",
-        email: response.data.email || "",
-        phone: response.data.phone || "",
-        lineid: response.data.lineid || "",
-        address: response.data.address || ""
-      });
-    } catch (err) {
-      console.error("ไม่สามารถดึงข้อมูลผู้ใช้ได้");
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.user?.email]);
+  const [editing, setEditing] = useState<FieldKey | null>(null);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/");
-    } else if (status === "authenticated") {
-      fetchUser();
-    }
-  }, [status, fetchUser, router]);
+    document.documentElement.dataset.section = "cobalt";
+    return () => {
+      delete document.documentElement.dataset.section;
+    };
+  }, []);
 
-  const handleEditClick = (field: string) => {
-    setEditMode((prev) => ({ ...prev, [field]: true }));
+  const start = (key: FieldKey) => {
+    setDraft((me?.[key] as string) ?? "");
+    setEditing(key);
   };
 
-  const handleCancel = (field: string) => {
-    setEditMode((prev) => ({ ...prev, [field]: false }));
-    setFormData(prev => ({ ...prev, [field]: userData[field] || "" }));
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = async (field: string) => {
-    if (!session?.user?.email) return;
-    setSavingField(field);
+  const save = async (key: FieldKey) => {
+    if (!me) return;
+    setSaving(true);
     try {
-      await axios.put(`/api/user/${session.user.email}`, {
-        [field]: formData[field as keyof typeof formData]
+      const res = await fetch(`/api/user/${encodeURIComponent(me.email)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: draft }),
       });
-      setUserData((prev: any) => ({
-        ...prev,
-        [field]: formData[field as keyof typeof formData]
-      }));
-      setEditMode((prev) => ({ ...prev, [field]: false }));
-      if (field === "email") router.replace("/user/login");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "บันทึกข้อมูลไม่สำเร็จ");
+
+      setEditing(null);
+      if (key === "email") {
+        flash("info", "เปลี่ยนอีเมลแล้ว กรุณาเข้าสู่ระบบใหม่ด้วยอีเมลใหม่");
+        router.replace("/user/login");
+        return;
+      }
+      await refresh();
+      flash("ok", "บันทึกข้อมูลแล้ว");
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      flash("warn", err instanceof Error ? err.message : "บันทึกข้อมูลไม่สำเร็จ");
     } finally {
-      setSavingField(null);
+      setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  const getIcon = (field: string) => {
-    switch (field) {
-      case 'name': return <User size={20} />;
-      case 'email': return <Mail size={20} />;
-      case 'phone': return <Phone size={20} />;
-      case 'lineid': return <MessageSquare size={20} />;
-      case 'address': return <MapPin size={20} />;
-      default: return null;
-    }
-  };
-
-  const getLabel = (field: string) => {
-    switch (field) {
-      case 'name': return 'ชื่อ-นามสกุล';
-      case 'email': return 'Email/Username (หากเปลี่ยนจะต้องทำการ Login ใหม่)';
-      case 'phone': return 'เบอร์โทรศัพท์';
-      case 'lineid': return 'Line ID';
-      case 'address': return 'ที่อยู่สำหรับการจัดส่ง';
-      default: return field;
-    }
-  };
+  const incomplete = !me?.name || !me?.phone || !me?.address;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <NavbarUser />
+    <div className="min-h-screen">
+      <Masthead />
 
-      {/* ปรับ Grid เป็น 10 ส่วนตามที่ตกลงกัน เพื่อให้ Sidebar กว้างขึ้น */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-          
-          {/* Sidebar Area - กว้างขึ้นเป็น 3 ส่วน */}
-          <div className="lg:col-span-3">
-             <div className="lg:sticky lg:top-8">
-                <Sidebar />
-             </div>
-          </div>
+      <main>
+        <Sheet className="pb-20">
+          <RunningHead
+            title="ข้อมูลส่วนตัว"
+            meta={
+              incomplete
+                ? "กรอกชื่อ เบอร์โทรศัพท์ และที่อยู่ให้ครบ เพื่อให้สั่งซื้อได้"
+                : "ข้อมูลนี้ถูกใช้เป็นที่อยู่ผู้รับในทุกคำสั่งซื้อ"
+            }
+          />
 
-          {/* Main Content Area - 7 ส่วน */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white shadow-xl shadow-blue-900/5 rounded-[2.5rem] border border-gray-100 overflow-hidden">
-              
-              {/* Profile Header */}
-              <div className="px-10 py-8 border-b border-gray-50 bg-gradient-to-r from-white to-gray-50/50 flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-black text-gray-800">ข้อมูลส่วนตัว</h2>
-                  <p className="text-sm text-gray-400 font-medium mt-1 italic">จัดการข้อมูลโปรไฟล์ของคุณให้เป็นปัจจุบัน</p>
-                </div>
-              </div>
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="lg:sticky lg:top-6 lg:self-start">
+              <Sidebar />
+            </div>
 
-              {/* Form Content */}
-              <div className="p-10 ">
-                {["name", "email", "phone", "lineid", "address"].map((field) => (
-                  <div key={field} className="relative group">
-                    <label className="flex items-center gap-3 text-[11px] font-black text-blue-500 uppercase tracking-[0.2em]  ml-1">
-                      <span className="p-1.5 bg-blue-50 rounded-lg">{getIcon(field)}</span>
-                      {getLabel(field)}
-                    </label>
+            <dl className="border border-rule bg-stock">
+              {FIELDS.map(({ key, label, hint, type, multiline, autoComplete, placeholder }) => {
+                const value = (me?.[key] as string) ?? "";
+                const isEditing = editing === key;
+                const required = key === "name" || key === "phone" || key === "address";
 
-                    <div className="flex items-center gap-4 min-h-[50px]">
-                      {editMode[field as keyof typeof editMode] ? (
-                        <div className="flex-1 flex gap-3 animate-in fade-in zoom-in-95 duration-200">
-                          {field === 'address' ? (
+                return (
+                  <div key={key} className="border-b border-rule px-5 py-4 last:border-b-0">
+                    <dt className="mb-2 flex flex-wrap items-baseline gap-x-2">
+                      <span className="u-label">{label}</span>
+                      {hint && <span className="text-caption text-ink-soft">{hint}</span>}
+                    </dt>
+
+                    <dd>
+                      {isEditing ? (
+                        <div className="flex flex-wrap items-start gap-2">
+                          {multiline ? (
                             <textarea
-                              name={field}
                               autoFocus
-                              rows={3}
-                              value={formData[field as keyof typeof formData]}
-                              onChange={handleInputChange}
-                              className="w-full bg-gray-50 border-2 border-blue-200 text-gray-900 rounded-2xl focus:border-blue-500 p-4 outline-none transition-all resize-none font-medium"
+                              rows={4}
+                              value={draft}
+                              onChange={(e) => setDraft(e.target.value)}
+                              placeholder={placeholder}
+                              aria-label={label}
+                              className="u-field min-w-0 flex-1 resize-y"
                             />
                           ) : (
                             <input
-                              type={field === "phone" ? "tel" : "text"}
-                              name={field}
                               autoFocus
-                              value={formData[field as keyof typeof formData]}
-                              onChange={handleInputChange}
-                              className="w-full bg-gray-50 border-2 border-blue-200 text-gray-900 rounded-2xl focus:border-blue-500 px-5 py-3 outline-none transition-all font-medium"
+                              type={type}
+                              autoComplete={autoComplete}
+                              value={draft}
+                              onChange={(e) => setDraft(e.target.value)}
+                              placeholder={placeholder}
+                              aria-label={label}
+                              className="u-field min-w-0 flex-1"
                             />
                           )}
-                          
-                          <div className="flex flex-col gap-2">
-                            <button
-                              onClick={() => handleSave(field)}
-                              disabled={savingField === field}
-                              className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
+                          <div className="flex gap-2">
+                            <Button size="md" busy={saving} onClick={() => save(key)} aria-label={`บันทึก${label}`}>
+                              <Check size={17} aria-hidden />
+                            </Button>
+                            <Button
+                              size="md"
+                              tone="quiet"
+                              onClick={() => setEditing(null)}
+                              aria-label="ยกเลิก"
                             >
-                              {savingField === field ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} strokeWidth={3} />}
-                            </button>
-                            <button
-                              onClick={() => handleCancel(field)}
-                              className="bg-gray-100 text-gray-400 p-3 rounded-xl hover:bg-gray-200 transition-all"
-                            >
-                              <X size={20} strokeWidth={3} />
-                            </button>
+                              <X size={17} aria-hidden />
+                            </Button>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex-1 flex justify-between items-center group/item bg-gray-50/30 p-4 rounded-2xl border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all">
-                          <span className={`text-lg font-bold ${formData[field as keyof typeof formData] ? 'text-gray-700' : 'text-gray-300 italic'}`}>
-                            {formData[field as keyof typeof formData] || 'ยังไม่ได้ระบุข้อมูล'}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <span
+                            className={`min-w-0 whitespace-pre-line text-base ${
+                              value ? "text-ink" : "text-ink-soft"
+                            }`}
+                          >
+                            {value || (required ? "ยังไม่ได้กรอก — จำเป็นสำหรับการสั่งซื้อ" : "ยังไม่ได้กรอก")}
                           </span>
                           <button
-                            onClick={() => handleEditClick(field)}
-                            className="flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm border border-gray-100 opacity-0 group-hover/item:opacity-100 transition-all transform translate-x-2 group-hover/item:translate-x-0"
+                            type="button"
+                            onClick={() => start(key)}
+                            className="inline-flex min-h-[40px] shrink-0 items-center px-2 font-display text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
                           >
-                            <Pencil size={14} />
-                            แก้ไข
+                            {value ? "แก้ไข" : "เพิ่ม"}
+                            <span className="sr-only"> {label}</span>
                           </button>
                         </div>
                       )}
-                    </div>
+                    </dd>
                   </div>
-                ))}
-
-              
-
-              </div>
-            </div>
+                );
+              })}
+            </dl>
           </div>
-        </div>
-      </div>
+        </Sheet>
+      </main>
+
+      <SiteFoot />
     </div>
   );
 }
