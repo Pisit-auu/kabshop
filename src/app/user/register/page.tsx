@@ -59,7 +59,7 @@ export default function Register() {
       foot={
         <>
           มีบัญชีอยู่แล้ว?{" "}
-          <Link href="/user/login" className="font-semibold text-[var(--section-text)] underline underline-offset-4">
+          <Link href="/user/login" className="font-semibold text-[var(--ink)] underline underline-offset-4">
             เข้าสู่ระบบ
           </Link>
         </>
@@ -132,7 +132,7 @@ export default function Register() {
             className="u-field"
           />
           {confirm.length > 0 && confirm !== password && (
-            <p className="mt-2 text-caption text-scarlet-text">รหัสผ่านทั้งสองช่องยังไม่ตรงกัน</p>
+            <p className="mt-2 text-caption text-sale-text">รหัสผ่านทั้งสองช่องยังไม่ตรงกัน</p>
           )}
         </div>
 

@@ -60,9 +60,30 @@ visual world.
 
 ## Brand Commitments
 
-None. The user explicitly released the name treatment, the existing `KAB.png`
-logo, the incumbent sky/blue palette, and the current page structure for this
-redesign. "KABSHOP" remains the product's name.
+"KABSHOP" is the product's name; `public/KAB.png` is the logo in use.
+
+**Standing design preference: the category standard, executed at full craft.**
+The user considered a distinctive own-world direction and chose the
+conventional modern e-commerce form instead. This is a durable preference, not
+a one-off: future surfaces follow mainstream commerce convention rather than
+inventing a metaphor.
+
+The craft bar is set by three named references the store should be able to sit
+beside without embarrassment:
+
+- **Apple Store / Uniqlo / Zara** — restraint and finish: large honest product
+  imagery, generous whitespace, near-black primary actions, very little
+  decorative colour.
+- **Shopify storefronts (Allbirds, Glossier)** — the layout grammar: a clean
+  responsive product grid, soft-cornered cards, quiet elevation, conventional
+  cart and checkout patterns.
+- **Shopee / Lazada** — the commercial clarity Thai shoppers expect: price and
+  stock unmistakable at a glance, category filtering always reachable, nothing
+  hidden behind a hover.
+
+Where these conflict, resolve in that order for looks and in Shopee's favour
+for information: restraint governs the surface, but a Thai shopper must never
+have to hunt for a price, a stock count, or the total.
 
 ## Evidence on Hand
 

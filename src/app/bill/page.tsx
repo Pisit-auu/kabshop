@@ -6,7 +6,7 @@ import { CheckCircle2, Printer } from "lucide-react";
 import Masthead from "../components/masthead";
 import SiteFoot from "../components/sitefoot";
 import RequireAuth from "../components/requireauth";
-import { Button, ButtonLink, Money, Notice, Sheet, PageLoading } from "../components/press";
+import { Button, ButtonLink, Money, Notice, Shell, PageLoading } from "../components/press";
 
 const SHIPPING_COST = 36;
 
@@ -75,15 +75,15 @@ function Bill() {
     return (
       <div className="min-h-screen">
         <Masthead />
-        <Sheet width="narrow" className="py-16">
+        <Shell width="narrow" className="py-16">
           <Notice>{error ?? "ไม่พบคำสั่งซื้อนี้"}</Notice>
           <div className="mt-6 flex gap-2">
-            <ButtonLink href="/user/profile/all" tone="quiet">
+            <ButtonLink href="/user/profile/all" tone="secondary">
               ดูประวัติสั่งซื้อ
             </ButtonLink>
             <ButtonLink href="/">กลับหน้าแรก</ButtonLink>
           </div>
-        </Sheet>
+        </Shell>
         <SiteFoot />
       </div>
     );
@@ -104,26 +104,26 @@ function Bill() {
       <Masthead />
 
       <main>
-        <Sheet width="narrow" className="pb-20 pt-10">
+        <Shell width="narrow" className="pb-20 pt-10">
           {/* The receipt: a printed document of record, torn from the sheet. */}
-          <article className="bg-stock border-x border-rule">
-            <div className="h-1 border-t-2 border-dashed border-rule-mid" aria-hidden />
-
-            <header className="bg-[var(--jade)] px-6 py-8 text-center text-white sm:px-10">
-              <CheckCircle2 size={36} strokeWidth={2} aria-hidden className="mx-auto" />
-              <h1 className="u-display mt-3 text-h2 leading-tight">รับคำสั่งซื้อแล้ว</h1>
-              <p className="mt-2 text-small text-white/85">
+          <article className="u-card overflow-hidden">
+            <header className="border-b border-line bg-canvas-2 px-6 py-10 text-center sm:px-10">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-go-soft text-go-text">
+                <CheckCircle2 size={30} strokeWidth={2} aria-hidden />
+              </span>
+              <h1 className="u-display mt-4 text-h2">รับคำสั่งซื้อแล้ว</h1>
+              <p className="mx-auto mt-2 max-w-[46ch] text-small text-muted">
                 ทางร้านได้รับคำสั่งซื้อของคุณเรียบร้อย และจะติดต่อกลับเพื่อยืนยันการจัดส่ง
               </p>
             </header>
 
             <div className="px-6 py-8 sm:px-10">
-              <dl className="grid grid-cols-1 gap-px border border-rule bg-rule sm:grid-cols-2">
-                <div className="bg-stock px-4 py-3">
+              <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded border border-line px-4 py-3">
                   <dt className="u-label">หมายเลขคำสั่งซื้อ</dt>
                   <dd className="u-fig mt-1 text-h4 font-bold">{receipt.orderId}</dd>
                 </div>
-                <div className="bg-stock px-4 py-3">
+                <div className="rounded border border-line px-4 py-3">
                   <dt className="u-label">วันที่สั่งซื้อ</dt>
                   <dd className="mt-1 text-small font-semibold">{placedAt}</dd>
                 </div>
@@ -132,7 +132,7 @@ function Bill() {
               {receipt.recipient.name && (
                 <section className="mt-6">
                   <h2 className="u-label mb-2">จัดส่งถึง</h2>
-                  <address className="not-italic text-small text-ink-mid">
+                  <address className="not-italic text-small text-muted">
                     <span className="block font-semibold text-ink">{receipt.recipient.name}</span>
                     {receipt.recipient.phone && <span className="u-fig mt-1 block">{receipt.recipient.phone}</span>}
                     {receipt.recipient.address && (
@@ -144,15 +144,15 @@ function Bill() {
 
               <section className="mt-8">
                 <h2 className="u-label mb-3">รายการสินค้า</h2>
-                <ul className="border-y-2 border-ink">
+                <ul className="border-y border-line">
                   {receipt.items.map((item) => (
                     <li
                       key={item.postId}
-                      className="flex items-start justify-between gap-4 border-b border-dashed border-rule-mid py-3 last:border-b-0"
+                      className="flex items-start justify-between gap-4 border-b border-line py-3 last:border-b-0"
                     >
                       <div className="min-w-0">
                         <p className="text-small font-semibold">{item.title}</p>
-                        <p className="mt-0.5 text-caption text-ink-mid">
+                        <p className="mt-0.5 text-caption text-muted">
                           จำนวน <span className="u-fig">{item.quantity}</span> ชิ้น
                         </p>
                       </div>
@@ -164,48 +164,47 @@ function Bill() {
 
               <dl className="mt-6 text-small">
                 <div className="flex justify-between gap-4 py-2">
-                  <dt className="text-ink-mid">ราคารวมสินค้า</dt>
+                  <dt className="text-muted">ราคารวมสินค้า</dt>
                   <dd>
                     <Money value={subTotal} />
                   </dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-rule py-2">
-                  <dt className="text-ink-mid">ค่าจัดส่ง</dt>
+                <div className="flex justify-between gap-4 border-b border-line py-2">
+                  <dt className="text-muted">ค่าจัดส่ง</dt>
                   <dd>
                     <Money value={SHIPPING_COST} />
                   </dd>
                 </div>
-                <div className="flex items-center justify-between gap-4 border-b-2 border-ink py-4">
+                <div className="flex items-center justify-between gap-4 border-t border-line pt-4 mt-2">
                   <dt className="font-display text-base font-bold">ยอดรวมสุทธิ</dt>
                   <dd>
-                    <Money value={grandTotal} className="text-h2 text-[var(--jade-text)]" />
+                    <Money value={grandTotal} className="text-h2 text-go-text" />
                   </dd>
                 </div>
               </dl>
 
               <div className="mt-8 flex flex-wrap gap-2 print:hidden">
-                <ButtonLink href="/" tone="ink" size="lg" className="flex-1">
+                <ButtonLink href="/" tone="primary" size="lg" className="flex-1">
                   เลือกซื้อสินค้าต่อ
                 </ButtonLink>
-                <Button tone="quiet" size="lg" onClick={() => window.print()}>
+                <Button tone="secondary" size="lg" onClick={() => window.print()}>
                   <Printer size={17} aria-hidden /> พิมพ์
                 </Button>
               </div>
 
-              <p className="mt-6 text-caption text-ink-soft">
+              <p className="mt-6 text-caption text-subtle">
                 เก็บหมายเลขคำสั่งซื้อไว้อ้างอิงเมื่อติดต่อทางร้าน ดูรายการทั้งหมดได้ที่{" "}
                 <a
                   href="/user/profile/all"
-                  className="font-semibold underline decoration-rule-mid underline-offset-4 hover:decoration-ink"
+                  className="font-semibold underline decoration-line-strong underline-offset-4 hover:decoration-ink"
                 >
                   ประวัติสั่งซื้อ
                 </a>
               </p>
             </div>
 
-            <div className="h-1 border-b-2 border-dashed border-rule-mid" aria-hidden />
           </article>
-        </Sheet>
+        </Shell>
       </main>
 
       <SiteFoot />

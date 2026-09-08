@@ -51,7 +51,7 @@ function Login() {
           ยังไม่มีบัญชี?{" "}
           <Link
             href="/user/register"
-            className="font-semibold text-[var(--section-text)] underline underline-offset-4"
+            className="font-semibold text-[var(--ink)] underline underline-offset-4"
           >
             สมัครสมาชิก
           </Link>

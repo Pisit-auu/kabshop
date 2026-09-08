@@ -11,37 +11,37 @@ const ITEMS = [
   { href: "/user/profile/all", label: "ประวัติสั่งซื้อ", Icon: ShoppingBag },
 ];
 
-/** The account index. Reads the session from context — it used to refetch it. */
 export default function Sidebar() {
   const pathname = usePathname();
   const { me } = useMe();
 
   return (
-    <nav aria-label="เมนูบัญชี" className="border border-rule bg-stock">
-      <div className="border-b border-rule px-5 py-5">
-        <p className="u-label">บัญชีของ</p>
-        <p className="mt-1 truncate text-base font-semibold">{me?.name || me?.email}</p>
-        <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-dashed border-rule-mid pt-3">
-          <span className="u-label">ยอดซื้อสะสม</span>
-          <Money value={me?.purchaseamount ?? 0} className="text-base" />
-        </p>
+    <nav aria-label="เมนูบัญชี" className="u-card overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-line p-5">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-canvas-2 font-display text-lead font-semibold">
+          {(me?.name || me?.email || "?").charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-small font-semibold">{me?.name || me?.email}</span>
+          <span className="block text-caption text-muted">
+            ยอดซื้อสะสม <Money value={me?.purchaseamount ?? 0} className="!text-caption text-ink" />
+          </span>
+        </span>
       </div>
 
-      <ul>
+      <ul className="p-2">
         {ITEMS.map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
-            <li key={href} className="border-b border-rule last:border-b-0">
+            <li key={href}>
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-[52px] items-center gap-3 px-5 font-display text-small font-semibold transition-colors duration-150 ${
-                  active
-                    ? "bg-[var(--section-fill)] text-[var(--section-on)]"
-                    : "text-ink hover:bg-paper"
+                className={`flex min-h-[48px] items-center gap-3 rounded-sm px-3 text-small transition-colors duration-150 ${
+                  active ? "bg-canvas-2 font-semibold text-ink" : "text-muted hover:bg-canvas-2 hover:text-ink"
                 }`}
               >
-                <Icon size={17} aria-hidden />
+                <Icon size={18} aria-hidden className={active ? "text-ink" : "text-subtle"} />
                 {label}
               </Link>
             </li>

@@ -16,7 +16,7 @@ import Masthead from "../components/masthead";
 import SiteFoot from "../components/sitefoot";
 import RequireAuth from "../components/requireauth";
 import { useFlash } from "../components/flash";
-import { Button, ButtonLink, Mark, Money, Notice, RunningHead, Sheet } from "../components/press";
+import { Button, ButtonLink, Badge, Money, Notice, PageHead, Shell } from "../components/press";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -62,12 +62,6 @@ function Admin() {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [showAllOrders, setShowAllOrders] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.dataset.section = "cobalt";
-    return () => {
-      delete document.documentElement.dataset.section;
-    };
-  }, []);
 
   const load = useCallback(async () => {
     setError(null);
@@ -126,11 +120,11 @@ function Admin() {
       {
         label: "ยอดขาย (บาท)",
         data: topSellers.map((p) => p.Sales),
-        backgroundColor: "#1240c4",
-        hoverBackgroundColor: "#191813",
+        backgroundColor: "#16161a",
+        hoverBackgroundColor: "#5c5c66",
         borderWidth: 0,
-        borderRadius: 0,
-        barPercentage: 0.72,
+        borderRadius: 4,
+        barPercentage: 0.66,
       },
     ],
   };
@@ -142,13 +136,13 @@ function Admin() {
       <Masthead />
 
       <main>
-        <Sheet className="pb-20">
-          <RunningHead
+        <Shell className="pb-20">
+          <PageHead
             title="จัดการร้าน"
             meta="สต็อก หมวดหมู่ และคำสั่งซื้อทั้งหมดของ KABSHOP"
             action={
               <div className="flex flex-wrap gap-2">
-                <ButtonLink href="/admin/createcategory" tone="quiet">
+                <ButtonLink href="/admin/createcategory" tone="secondary">
                   <Plus size={16} aria-hidden /> เพิ่มหมวดหมู่
                 </ButtonLink>
                 <ButtonLink href="/admin/create">
@@ -165,7 +159,7 @@ function Admin() {
           )}
 
           {/* The figures band: read across like a market table, not stat cards. */}
-          <dl className="mt-8 grid grid-cols-2 gap-px border border-rule bg-rule lg:grid-cols-4">
+          <dl className="mt-8 grid grid-cols-2 gap-px border border-line bg-line lg:grid-cols-4">
             <Figure label="สินค้าในระบบ" value={loading ? "…" : String(products.length)} note={`หมด ${outOfStock} รายการ`} />
             <Figure label="หมวดหมู่" value={loading ? "…" : String(categories.length)} />
             <Figure label="คำสั่งซื้อ" value={loading ? "…" : String(orders.length)} note={`รวม ฿${revenue.toLocaleString("th-TH")}`} />
@@ -190,7 +184,7 @@ function Admin() {
                 <h2 id="ad-stock" className="u-display text-h4">
                   คลังสินค้า
                 </h2>
-                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
+                <div className="mt-3 border-b border-line" aria-hidden />
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <div className="relative min-w-[200px] flex-1">
@@ -200,7 +194,7 @@ function Admin() {
                     <Search
                       size={16}
                       aria-hidden
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle"
                     />
                     <input
                       id="ad-search"
@@ -233,7 +227,7 @@ function Admin() {
 
                 {/* Phones get a ruled list; a 620px table inside a scroller
                     still pushes the document sideways in Chromium. */}
-                <ul className="mt-4 divide-y divide-rule border border-rule bg-stock lg:hidden">
+                <ul className="mt-4 divide-y divide-line border border-line bg-surface lg:hidden">
                   {products.map((p) => {
                     const stock = p.quantity ?? 0;
                     const key = `posts-${p.id}`;
@@ -243,12 +237,12 @@ function Admin() {
                           <p className="min-w-0 text-small font-semibold">{p.title}</p>
                           <Money value={p.price} className="shrink-0 text-small" />
                         </div>
-                        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-mid">
+                        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted">
                           <span>{p.category?.name ?? "ไม่มีหมวดหมู่"}</span>
                           {stock === 0 ? (
-                            <Mark tone="scarlet">หมด</Mark>
+                            <Badge tone="sale">หมด</Badge>
                           ) : (
-                            <span className={stock <= 3 ? "text-scarlet-text" : ""}>
+                            <span className={stock <= 3 ? "text-sale-text" : ""}>
                               คงเหลือ <span className="u-fig font-bold">{stock}</span> ชิ้น
                             </span>
                           )}
@@ -269,17 +263,17 @@ function Admin() {
                     );
                   })}
                   {!loading && products.length === 0 && (
-                    <li className="px-4 py-10 text-center text-small text-ink-mid">
+                    <li className="px-4 py-10 text-center text-small text-muted">
                       {search || category ? "ไม่พบสินค้าตามเงื่อนไขที่กรอง" : "ยังไม่มีสินค้าในคลัง"}
                     </li>
                   )}
                 </ul>
 
-                <div className="mt-4 hidden border border-rule bg-stock lg:block">
+                <div className="mt-4 hidden border border-line bg-surface lg:block">
                   <table className="w-full border-collapse text-left">
                     <caption className="sr-only">รายการสินค้าทั้งหมดในคลัง</caption>
                     <thead>
-                      <tr className="border-b-2 border-ink">
+                      <tr className="border-b border-line bg-canvas-2">
                         <th scope="col" className="u-label px-4 py-3">ชื่อสินค้า</th>
                         <th scope="col" className="u-label px-4 py-3">หมวดหมู่</th>
                         <th scope="col" className="u-label px-4 py-3 text-right">ราคา</th>
@@ -287,21 +281,21 @@ function Admin() {
                         <th scope="col" className="u-label px-4 py-3 text-right">จัดการ</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-rule">
+                    <tbody className="divide-y divide-line">
                       {products.map((p) => {
                         const stock = p.quantity ?? 0;
                         return (
-                          <tr key={p.id} className="transition-colors duration-150 hover:bg-paper">
+                          <tr key={p.id} className="transition-colors duration-150 hover:bg-canvas">
                             <td className="px-4 py-3 text-small font-semibold">{p.title}</td>
-                            <td className="px-4 py-3 text-caption text-ink-mid">{p.category?.name ?? "—"}</td>
+                            <td className="px-4 py-3 text-caption text-muted">{p.category?.name ?? "—"}</td>
                             <td className="px-4 py-3 text-right">
                               <Money value={p.price} className="text-small" />
                             </td>
                             <td className="px-4 py-3 text-right">
                               {stock === 0 ? (
-                                <Mark tone="scarlet">หมด</Mark>
+                                <Badge tone="sale">หมด</Badge>
                               ) : (
-                                <span className={`u-fig text-small font-bold ${stock <= 3 ? "text-scarlet-text" : ""}`}>
+                                <span className={`u-fig text-small font-bold ${stock <= 3 ? "text-sale-text" : ""}`}>
                                   {stock}
                                 </span>
                               )}
@@ -326,7 +320,7 @@ function Admin() {
 
                   {!loading && products.length === 0 && (
                     <div className="p-10 text-center">
-                      <p className="text-small text-ink-mid">
+                      <p className="text-small text-muted">
                         {search || category ? "ไม่พบสินค้าตามเงื่อนไขที่กรอง" : "ยังไม่มีสินค้าในคลัง"}
                       </p>
                     </div>
@@ -339,10 +333,10 @@ function Admin() {
                 <h2 id="ad-sales" className="u-display text-h4">
                   ยอดขายรายสินค้า
                 </h2>
-                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
-                <div className="mt-4 border border-rule bg-stock p-5">
+                <div className="mt-3 border-b border-line" aria-hidden />
+                <div className="mt-4 border border-line bg-surface p-5">
                   {topSellers.length === 0 ? (
-                    <p className="py-10 text-center text-small text-ink-mid">ยังไม่มียอดขายที่จะแสดง</p>
+                    <p className="py-10 text-center text-small text-muted">ยังไม่มียอดขายที่จะแสดง</p>
                   ) : (
                     <div className="h-[300px]">
                       <Bar
@@ -353,9 +347,9 @@ function Admin() {
                           plugins: {
                             legend: { display: false },
                             tooltip: {
-                              backgroundColor: "#191813",
+                              backgroundColor: "#16161a",
                               padding: 10,
-                              cornerRadius: 0,
+                              cornerRadius: 6,
                               displayColors: false,
                               callbacks: {
                                 label: (ctx) => `฿${Number(ctx.raw).toLocaleString("th-TH")}`,
@@ -365,14 +359,14 @@ function Admin() {
                           scales: {
                             x: {
                               grid: { display: false },
-                              border: { color: "#191813", width: 2 },
-                              ticks: { color: "#57554a", font: { size: 11 } },
+                              border: { color: "#e6e4e0", width: 1 },
+                              ticks: { color: "#5c5c66", font: { size: 11 } },
                             },
                             y: {
-                              grid: { color: "#c9c6b8" },
+                              grid: { color: "#f0eeeb" },
                               border: { display: false },
                               ticks: {
-                                color: "#57554a",
+                                color: "#5c5c66",
                                 font: { size: 11 },
                                 callback: (v) => `฿${Number(v).toLocaleString("th-TH")}`,
                               },
@@ -392,16 +386,16 @@ function Admin() {
                 <h2 id="ad-cats" className="u-display text-h4">
                   หมวดหมู่
                 </h2>
-                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
-                <ul className="mt-4 border border-rule bg-stock">
+                <div className="mt-3 border-b border-line" aria-hidden />
+                <ul className="mt-4 border border-line bg-surface">
                   {categories.map((c) => {
                     const key = `categories-${c.id}`;
                     return (
-                      <li key={c.id} className="border-b border-rule px-4 py-3 last:border-b-0">
+                      <li key={c.id} className="border-b border-line px-4 py-3 last:border-b-0">
                         <div className="flex items-center justify-between gap-3">
                           <span className="min-w-0 truncate text-small font-semibold">
                             {c.name}{" "}
-                            <span className="u-fig text-caption font-normal text-ink-soft">
+                            <span className="u-fig text-caption font-normal text-subtle">
                               {c._count?.posts ?? 0}
                             </span>
                           </span>
@@ -410,7 +404,7 @@ function Admin() {
                               <Button size="sm" tone="danger" onClick={() => remove("categories", c.id, c.name)}>
                                 ลบ
                               </Button>
-                              <Button size="sm" tone="quiet" onClick={() => setConfirming(null)}>
+                              <Button size="sm" tone="secondary" onClick={() => setConfirming(null)}>
                                 ยกเลิก
                               </Button>
                             </div>
@@ -419,7 +413,7 @@ function Admin() {
                               <Link
                                 href={`/admin/editcategory/${c.id}`}
                                 aria-label={`แก้ไขหมวดหมู่ ${c.name}`}
-                                className="inline-flex h-10 w-10 items-center justify-center text-ink-soft transition-colors duration-150 hover:text-ink"
+                                className="inline-flex h-10 w-10 items-center justify-center text-subtle transition-colors duration-150 hover:text-ink"
                               >
                                 <Pencil size={15} aria-hidden />
                               </Link>
@@ -427,7 +421,7 @@ function Admin() {
                                 type="button"
                                 onClick={() => setConfirming(key)}
                                 aria-label={`ลบหมวดหมู่ ${c.name}`}
-                                className="inline-flex h-10 w-10 items-center justify-center text-ink-soft transition-colors duration-150 hover:text-scarlet-text"
+                                className="inline-flex h-10 w-10 items-center justify-center text-subtle transition-colors duration-150 hover:text-sale-text"
                               >
                                 <Trash2 size={15} aria-hidden />
                               </button>
@@ -435,7 +429,7 @@ function Admin() {
                           )}
                         </div>
                         {confirming === key && (
-                          <p className="mt-2 text-caption text-scarlet-text">
+                          <p className="mt-2 text-caption text-sale-text">
                             ลบหมวดหมู่นี้จะลบสินค้าทั้งหมด {c._count?.posts ?? 0} รายการในหมวดด้วย
                           </p>
                         )}
@@ -443,7 +437,7 @@ function Admin() {
                     );
                   })}
                   {!loading && categories.length === 0 && (
-                    <li className="px-4 py-8 text-center text-small text-ink-mid">ยังไม่มีหมวดหมู่</li>
+                    <li className="px-4 py-8 text-center text-small text-muted">ยังไม่มีหมวดหมู่</li>
                   )}
                 </ul>
               </section>
@@ -452,20 +446,20 @@ function Admin() {
                 <h2 id="ad-orders" className="u-display text-h4">
                   คำสั่งซื้อล่าสุด
                 </h2>
-                <div className="mt-3 h-[3px] bg-ink" aria-hidden />
-                <ul className="mt-4 border border-rule bg-stock">
+                <div className="mt-3 border-b border-line" aria-hidden />
+                <ul className="mt-4 border border-line bg-surface">
                   {visibleOrders.map((o) => {
                     const total = o.items.reduce((s, i) => s + i.totalPrice, 0) + SHIPPING_COST;
                     return (
-                      <li key={o.orderId} className="border-b border-rule px-4 py-3 last:border-b-0">
+                      <li key={o.orderId} className="border-b border-line px-4 py-3 last:border-b-0">
                         <div className="flex items-baseline justify-between gap-3">
                           <span className="u-fig text-small font-bold">{o.orderId}</span>
                           <Money value={total} className="text-small" />
                         </div>
-                        <p className="mt-1 truncate text-caption text-ink-mid">
+                        <p className="mt-1 truncate text-caption text-muted">
                           {o.user?.name || o.user?.email || o.Username || "ไม่ทราบผู้สั่ง"}
                         </p>
-                        <p className="u-fig mt-0.5 text-caption text-ink-soft">
+                        <p className="u-fig mt-0.5 text-caption text-subtle">
                           {new Date(o.createdAt).toLocaleDateString("th-TH", {
                             day: "numeric",
                             month: "short",
@@ -476,7 +470,7 @@ function Admin() {
                     );
                   })}
                   {!loading && orders.length === 0 && (
-                    <li className="px-4 py-8 text-center text-small text-ink-mid">ยังไม่มีคำสั่งซื้อ</li>
+                    <li className="px-4 py-8 text-center text-small text-muted">ยังไม่มีคำสั่งซื้อ</li>
                   )}
                 </ul>
                 {orders.length > 6 && (
@@ -484,7 +478,7 @@ function Admin() {
                     type="button"
                     onClick={() => setShowAllOrders((v) => !v)}
                     aria-expanded={showAllOrders}
-                    className="mt-1 inline-flex min-h-[40px] items-center font-display text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
+                    className="mt-1 inline-flex min-h-[40px] items-center font-display text-caption font-semibold text-[var(--ink)] underline underline-offset-4"
                   >
                     {showAllOrders ? "ย่อรายการ" : `ดูทั้งหมด ${orders.length} คำสั่งซื้อ`}
                   </button>
@@ -492,7 +486,7 @@ function Admin() {
               </section>
             </div>
           </div>
-        </Sheet>
+        </Shell>
       </main>
 
       <SiteFoot />
@@ -523,11 +517,11 @@ function RowActions({
   if (confirming === confirmKey) {
     return (
       <div className={`flex flex-wrap items-center gap-2 ${justify}`}>
-        <span className="text-caption text-ink-mid">ลบถาวร?</span>
+        <span className="text-caption text-muted">ลบถาวร?</span>
         <Button size="sm" tone="danger" onClick={onDelete}>
           ลบ
         </Button>
-        <Button size="sm" tone="quiet" onClick={() => setConfirming(null)}>
+        <Button size="sm" tone="secondary" onClick={() => setConfirming(null)}>
           ยกเลิก
         </Button>
       </div>
@@ -538,7 +532,7 @@ function RowActions({
     <div className={`flex items-center gap-4 ${justify}`}>
       <Link
         href={editHref}
-        className="inline-flex min-h-[40px] items-center gap-1 pr-2 text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
+        className="inline-flex min-h-[40px] items-center gap-1 pr-2 text-caption font-semibold text-[var(--ink)] underline underline-offset-4"
       >
         <Pencil size={13} aria-hidden /> แก้ไข
         <span className="sr-only"> {label}</span>
@@ -546,7 +540,7 @@ function RowActions({
       <button
         type="button"
         onClick={() => setConfirming(confirmKey)}
-        className="inline-flex min-h-[40px] items-center gap-1 px-2 text-caption font-semibold text-scarlet-text underline underline-offset-4"
+        className="inline-flex min-h-[40px] items-center gap-1 px-2 text-caption font-semibold text-sale-text underline underline-offset-4"
       >
         <Trash2 size={13} aria-hidden /> ลบ
         <span className="sr-only"> {label}</span>
@@ -567,7 +561,7 @@ function Figure({
   text?: boolean;
 }) {
   return (
-    <div className="bg-stock px-4 py-4">
+    <div className="bg-surface px-4 py-4">
       <dt className="u-label">{label}</dt>
       <dd
         className={`mt-1 truncate font-display font-bold ${
@@ -576,7 +570,7 @@ function Figure({
       >
         {value}
       </dd>
-      {note && <p className="mt-1 truncate text-caption text-ink-soft">{note}</p>}
+      {note && <p className="mt-1 truncate text-caption text-subtle">{note}</p>}
     </div>
   );
 }

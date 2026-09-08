@@ -2,147 +2,148 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { LogOut, Menu, ShoppingCart, UserRound, X, Wrench } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { LogOut, Menu, Package, Search, ShoppingBag, Truck, UserRound, X } from "lucide-react";
 import { useMe } from "./me";
 
-const EDITION_DATE = new Intl.DateTimeFormat("th-TH", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
 /**
- * The masthead. One component for every reader of the paper: signed out,
- * signed in, and the shopkeeper — the app used to ship three separate navbars
- * that disagreed about the brand.
- *
- * `size="full"` prints the front-page masthead; inner pages take the strip.
+ * The store header. One component for every reader: signed out, member and
+ * shopkeeper. Search lives here and drives the catalogue through the URL, so a
+ * filtered view is shareable and the back button works.
  */
-export default function Masthead({ size = "strip" }: { size?: "full" | "strip" }) {
+export default function Masthead() {
+  return (
+    <Suspense fallback={<HeaderShell />}>
+      <Header />
+    </Suspense>
+  );
+}
+
+function HeaderShell() {
+  return <header className="h-[112px] border-b border-line bg-surface sm:h-[124px]" />;
+}
+
+function Header() {
   const { me, cartCount, loading } = useMe();
   const pathname = usePathname();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [today, setToday] = useState("");
+  const params = useSearchParams();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState(params.get("q") ?? "");
 
-  // Rendered after mount: the server and the reader are rarely in the same day.
-  useEffect(() => setToday(EDITION_DATE.format(new Date())), []);
-
-  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => setQuery(params.get("q") ?? ""), [params]);
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [menuOpen]);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const next = new URLSearchParams(pathname === "/" ? params.toString() : "");
+    const q = query.trim();
+    if (q) next.set("q", q);
+    else next.delete("q");
+    router.push(next.toString() ? `/?${next}` : "/");
+  };
 
   return (
     <>
-      <header className="bg-ink text-paper">
-        <div className="mx-auto w-full max-w-sheet px-4 sm:px-6">
-          {/* Flag line: the paper's standing facts. */}
-          <div className="flex items-center justify-between gap-4 border-b border-white/15 py-2">
-            <p className="u-label !text-white/60 truncate">{today || " "}</p>
-            <p className="u-label !text-white/60 hidden sm:block">ส่งทั่วไทย · ค่าส่ง ฿36 ต่อคำสั่งซื้อ</p>
-          </div>
+      <p className="flex items-center justify-center gap-2 bg-brand px-4 py-2 text-center text-micro font-medium text-brand-on">
+        <Truck size={14} aria-hidden className="shrink-0" />
+        ส่งทั่วไทย ค่าจัดส่งคงที่ ฿36 ต่อคำสั่งซื้อ ไม่ว่าจะสั่งกี่ชิ้น
+      </p>
 
-          <div
-            className={
-              size === "full"
-                ? "relative flex flex-col items-center gap-4 py-6"
-                : "flex items-center justify-between gap-3 py-3"
-            }
-          >
-            <div
-              className={
-                size === "full"
-                  ? "flex w-full items-center justify-center"
-                  : "flex min-w-0 items-center gap-3"
-              }
+      <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur">
+        <div className="mx-auto w-full max-w-shell px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center gap-3 sm:gap-6">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="เปิดเมนู"
+              aria-expanded={menuOpen}
+              className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-ink transition-colors duration-150 hover:bg-canvas-2 lg:hidden"
             >
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                aria-label="เปิดสารบัญ"
-                aria-expanded={open}
-                className={`inline-flex h-11 w-11 shrink-0 items-center justify-center border border-white/25 transition-colors duration-150 hover:bg-white/10 ${
-                  size === "full" ? "absolute left-0 top-0" : ""
-                }`}
-              >
-                <Menu size={20} aria-hidden />
-              </button>
+              <Menu size={22} aria-hidden />
+            </button>
 
-              {/* On the front page the masthead is the page's heading, the way a
-                  paper's nameplate is. Inner pages carry their own h1. */}
-              <Wordmark as={size === "full" ? "h1" : "span"} size={size} />
-            </div>
+            <Link href="/" className="flex shrink-0 items-center gap-2.5 py-2">
+              <Image src="/KAB.png" alt="" width={34} height={34} className="object-contain" priority />
+              <span className="u-display text-h4 font-bold tracking-[-0.02em]">KABSHOP</span>
+            </Link>
 
-            {size === "full" && (
-              <p className="mx-auto max-w-[52ch] text-center text-caption text-white/65">
-                ประกาศขายสินค้าประจำวัน — รวมทุกหมวดไว้ในหน้าเดียว
-              </p>
-            )}
+            <form onSubmit={submitSearch} role="search" className="relative hidden flex-1 lg:block">
+              <label htmlFor="site-search" className="sr-only">
+                ค้นหาสินค้า
+              </label>
+              <Search
+                size={18}
+                aria-hidden
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle"
+              />
+              <input
+                id="site-search"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="ค้นหาสินค้าที่ต้องการ"
+                className="u-field !rounded-full !bg-canvas-2 !pl-11 !pr-4 !text-small"
+              />
+            </form>
 
-            <nav
-              aria-label="บัญชีของฉัน"
-              className={`flex shrink-0 items-center gap-2 ${
-                size === "full" ? "justify-center sm:absolute sm:right-0 sm:top-0" : "justify-end"
-              }`}
-            >
+            <nav aria-label="บัญชีของฉัน" className="ml-auto flex shrink-0 items-center gap-1">
               {loading ? (
-                <span className="h-11 w-28 bg-white/10" aria-hidden />
+                <span className="h-11 w-24 rounded-sm bg-canvas-2" aria-hidden />
               ) : me ? (
                 <>
                   <Link
-                    href="/cart"
-                    className="inline-flex h-11 items-center gap-2 border border-white/25 px-2.5 transition-colors duration-150 hover:bg-white/10 sm:px-3"
+                    href="/user/profile/information"
+                    className="hidden h-11 max-w-[180px] items-center gap-2 rounded-sm px-3 text-small font-medium transition-colors duration-150 hover:bg-canvas-2 sm:inline-flex"
                   >
-                    <ShoppingCart size={18} aria-hidden />
-                    <span className="hidden text-caption font-semibold sm:inline">ตะกร้า</span>
-                    <span className="u-fig min-w-[22px] bg-[var(--section-fill)] px-1 text-center text-[12px] font-bold leading-[18px] text-[var(--section-on)]">
-                      {cartCount}
-                    </span>
-                    <span className="sr-only">รายการในตะกร้า</span>
+                    <UserRound size={19} aria-hidden />
+                    <span className="truncate">{me.name || me.email}</span>
                   </Link>
                   <Link
-                    href="/user/profile/information"
-                    aria-label="ข้อมูลส่วนตัว"
-                    className="inline-flex h-11 max-w-[190px] items-center justify-center gap-2 border border-white/25 px-2.5 transition-colors duration-150 hover:bg-white/10 sm:px-3"
+                    href="/cart"
+                    aria-label={`ตะกร้าสินค้า ${cartCount} รายการ`}
+                    className="relative inline-flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-150 hover:bg-canvas-2"
                   >
-                    <UserRound size={18} aria-hidden />
-                    <span className="hidden truncate text-caption font-semibold sm:inline">
-                      {me.name || me.email}
-                    </span>
+                    <ShoppingBag size={20} aria-hidden />
+                    {cartCount > 0 && (
+                      <span className="u-fig absolute right-1 top-1 min-w-[18px] rounded-full bg-sale px-1 text-center text-[11px] font-bold leading-[18px] text-white">
+                        {cartCount}
+                      </span>
+                    )}
                   </Link>
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: "/" })}
                     aria-label="ออกจากระบบ"
-                    className="inline-flex h-11 w-11 items-center justify-center border border-white/25 transition-colors duration-150 hover:bg-white/10"
+                    className="hidden h-11 w-11 items-center justify-center rounded-sm transition-colors duration-150 hover:bg-canvas-2 sm:inline-flex"
                   >
-                    <LogOut size={18} aria-hidden />
+                    <LogOut size={19} aria-hidden />
                   </button>
                 </>
               ) : (
                 <>
                   <Link
                     href="/user/login"
-                    className="inline-flex h-11 items-center px-3 text-small font-semibold underline underline-offset-4 decoration-white/40 transition-colors duration-150 hover:decoration-white"
+                    className="inline-flex h-11 items-center rounded-sm px-3 text-small font-medium transition-colors duration-150 hover:bg-canvas-2"
                   >
                     เข้าสู่ระบบ
                   </Link>
                   <Link
                     href="/user/register"
-                    className="inline-flex h-11 items-center whitespace-nowrap bg-[var(--section-fill)] px-3 font-display text-small font-semibold text-[var(--section-on)] transition-shadow duration-150 hover:shadow-[inset_0_-3px_0_rgba(0,0,0,0.34)] sm:px-4"
+                    className="inline-flex h-11 items-center whitespace-nowrap rounded-sm bg-brand px-4 font-display text-small font-semibold text-brand-on transition-colors duration-200 hover:bg-[var(--brand-hover)]"
                   >
                     สมัครสมาชิก
                   </Link>
@@ -150,79 +151,106 @@ export default function Masthead({ size = "strip" }: { size?: "full" | "strip" }
               )}
             </nav>
           </div>
-        </div>
 
-        {/* The flash rule: the live section ink, printed across the full width. */}
-        <div className="flex" aria-hidden>
-          <div className="h-2 w-1/3 bg-[var(--section-fill)] transition-colors duration-300 ease-press" />
-          <div className="h-2 flex-1 bg-paper-deep" />
+          {/* Mobile search sits on its own row rather than hiding behind an icon. */}
+          <form onSubmit={submitSearch} role="search" className="relative pb-3 lg:hidden">
+            <label htmlFor="site-search-sm" className="sr-only">
+              ค้นหาสินค้า
+            </label>
+            <Search
+              size={18}
+              aria-hidden
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle"
+            />
+            <input
+              id="site-search-sm"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ค้นหาสินค้าที่ต้องการ"
+              className="u-field !rounded-full !bg-canvas-2 !pl-11 !pr-4 !text-small"
+            />
+          </form>
         </div>
       </header>
 
-      {/* The index drawer. */}
-      {open && (
-        <div className="fixed inset-0 z-[90]">
+      {menuOpen && (
+        <div className="fixed inset-0 z-[90] lg:hidden">
           <button
             type="button"
-            aria-label="ปิดสารบัญ"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full bg-ink/55"
+            aria-label="ปิดเมนู"
+            onClick={() => setMenuOpen(false)}
+            className="absolute inset-0 h-full w-full bg-ink/45"
           />
           <nav
-            aria-label="สารบัญ"
-            className="absolute inset-y-0 left-0 flex w-[min(340px,86vw)] flex-col bg-paper animate-flash-in"
+            aria-label="เมนูหลัก"
+            className="absolute inset-y-0 left-0 flex w-[min(320px,86vw)] flex-col bg-surface animate-slide-down"
           >
-            <div className="flex items-center justify-between bg-ink px-5 py-4 text-paper">
-              <span className="u-display text-h4 font-black tracking-[-0.02em]">สารบัญ</span>
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <span className="u-display text-h4 font-bold">เมนู</span>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
-                aria-label="ปิดสารบัญ"
-                className="inline-flex h-10 w-10 items-center justify-center border border-white/25 transition-colors duration-150 hover:bg-white/10"
+                onClick={() => setMenuOpen(false)}
+                aria-label="ปิดเมนู"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-sm transition-colors duration-150 hover:bg-canvas-2"
               >
-                <X size={18} aria-hidden />
+                <X size={19} aria-hidden />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-6">
-              <p className="u-label mb-3">หน้าร้าน</p>
-              <IndexLink href="/" active={pathname === "/"}>หน้าแรก</IndexLink>
-
+            <div className="flex-1 overflow-y-auto p-3">
+              <MenuLink href="/" active={pathname === "/"} icon={<Package size={18} />}>
+                สินค้าทั้งหมด
+              </MenuLink>
               {me ? (
                 <>
-                  <p className="u-label mb-3 mt-8">บัญชีของฉัน</p>
-                  <IndexLink href="/cart" active={pathname === "/cart"}>
-                    ตะกร้าสินค้า <span className="u-fig text-ink-mid">({cartCount})</span>
-                  </IndexLink>
-                  <IndexLink href="/user/profile/all" active={pathname === "/user/profile/all"}>ประวัติสั่งซื้อ</IndexLink>
-                  <IndexLink href="/user/profile/information" active={pathname === "/user/profile/information"}>ข้อมูลส่วนตัว</IndexLink>
-
+                  <MenuLink href="/cart" active={pathname === "/cart"} icon={<ShoppingBag size={18} />}>
+                    ตะกร้าสินค้า {cartCount > 0 && <span className="u-fig text-muted">({cartCount})</span>}
+                  </MenuLink>
+                  <MenuLink
+                    href="/user/profile/all"
+                    active={pathname === "/user/profile/all"}
+                    icon={<Truck size={18} />}
+                  >
+                    ประวัติสั่งซื้อ
+                  </MenuLink>
+                  <MenuLink
+                    href="/user/profile/information"
+                    active={pathname === "/user/profile/information"}
+                    icon={<UserRound size={18} />}
+                  >
+                    ข้อมูลส่วนตัว
+                  </MenuLink>
                   {me.role === "admin" && (
-                    <>
-                      <p className="u-label mb-3 mt-8">หลังร้าน</p>
-                      <IndexLink href="/admin" active={pathname === "/admin"}>
-                        <Wrench size={16} aria-hidden /> จัดการร้าน
-                      </IndexLink>
-                    </>
+                    <MenuLink href="/admin" active={pathname === "/admin"} icon={<Package size={18} />}>
+                      จัดการร้าน
+                    </MenuLink>
                   )}
                 </>
               ) : (
                 <>
-                  <p className="u-label mb-3 mt-8">บัญชี</p>
-                  <IndexLink href="/user/login" active={pathname === "/user/login"}>เข้าสู่ระบบ</IndexLink>
-                  <IndexLink href="/user/register" active={pathname === "/user/register"}>สมัครสมาชิก</IndexLink>
+                  <MenuLink href="/user/login" active={pathname === "/user/login"} icon={<UserRound size={18} />}>
+                    เข้าสู่ระบบ
+                  </MenuLink>
+                  <MenuLink
+                    href="/user/register"
+                    active={pathname === "/user/register"}
+                    icon={<UserRound size={18} />}
+                  >
+                    สมัครสมาชิก
+                  </MenuLink>
                 </>
               )}
             </div>
 
             {me && (
-              <div className="border-t border-rule p-5">
+              <div className="border-t border-line p-3">
                 <button
                   type="button"
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 border border-scarlet px-4 font-display text-small font-semibold text-scarlet-text transition-colors duration-150 hover:bg-scarlet hover:text-white"
+                  className="inline-flex min-h-[44px] w-full items-center gap-3 rounded-sm px-3 text-small font-medium text-sale-text transition-colors duration-150 hover:bg-sale-soft"
                 >
-                  <LogOut size={16} aria-hidden /> ออกจากระบบ
+                  <LogOut size={18} aria-hidden /> ออกจากระบบ
                 </button>
               </div>
             )}
@@ -233,47 +261,28 @@ export default function Masthead({ size = "strip" }: { size?: "full" | "strip" }
   );
 }
 
-function Wordmark({ as: As, size }: { as: "h1" | "span"; size: "full" | "strip" }) {
-  return (
-    <As className="min-w-0">
-      <Link href="/" className="group flex min-w-0 items-center gap-3 py-2">
-        <Image
-          src="/KAB.png"
-          alt=""
-          width={size === "full" ? 56 : 34}
-          height={size === "full" ? 56 : 34}
-          className={`object-contain ${size === "full" ? "" : "hidden sm:block"}`}
-          priority
-        />
-        <span
-          className={`u-display font-black leading-none tracking-[-0.035em] ${
-            size === "full" ? "text-masthead" : "text-h4 sm:text-h3"
-          }`}
-        >
-          KABSHOP
-        </span>
-      </Link>
-    </As>
-  );
-}
-
-function IndexLink({
+function MenuLink({
   href,
   active,
+  icon,
   children,
 }: {
   href: string;
   active: boolean;
+  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`flex min-h-[46px] items-center gap-2 border-b border-rule text-base transition-colors duration-150 ${
-        active ? "font-semibold text-[var(--section-text)]" : "text-ink hover:text-[var(--section-text)]"
+      className={`flex min-h-[48px] items-center gap-3 rounded-sm px-3 text-base transition-colors duration-150 ${
+        active ? "bg-canvas-2 font-semibold text-ink" : "text-ink hover:bg-canvas-2"
       }`}
     >
+      <span className="text-subtle" aria-hidden>
+        {icon}
+      </span>
       {children}
     </Link>
   );

@@ -7,7 +7,7 @@ import SiteFoot from "../../components/sitefoot";
 import RequireAuth from "../../components/requireauth";
 import { useFlash } from "../../components/flash";
 import { FormShell, Fieldset, ImageField } from "../../components/adminform";
-import { Button, Label, Notice, Sheet } from "../../components/press";
+import { Button, Label, Notice, Shell } from "../../components/press";
 
 type Category = { id: number; name: string };
 
@@ -79,7 +79,7 @@ function CreateProduct() {
     <div className="min-h-screen">
       <Masthead />
       <main>
-        <Sheet width="column" className="pb-20">
+        <Shell width="column" className="pb-20">
           <FormShell title="เพิ่มสินค้าใหม่" intro="กรอกข้อมูลให้ครบ สินค้าจะขึ้นหน้าร้านทันทีหลังบันทึก">
             <form onSubmit={submit} noValidate className="space-y-6">
               {error && <Notice>{error}</Notice>}
@@ -168,13 +168,13 @@ function CreateProduct() {
                 <Button type="submit" size="lg" busy={saving} className="flex-1">
                   บันทึกและขึ้นขาย
                 </Button>
-                <Button type="button" tone="quiet" size="lg" onClick={() => router.push("/admin")}>
+                <Button type="button" tone="secondary" size="lg" onClick={() => router.push("/admin")}>
                   ยกเลิก
                 </Button>
               </div>
             </form>
           </FormShell>
-        </Sheet>
+        </Shell>
       </main>
       <SiteFoot />
     </div>

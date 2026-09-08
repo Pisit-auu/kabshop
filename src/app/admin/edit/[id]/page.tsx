@@ -7,7 +7,7 @@ import SiteFoot from "../../../components/sitefoot";
 import RequireAuth from "../../../components/requireauth";
 import { useFlash } from "../../../components/flash";
 import { FormShell, Fieldset, ImageField } from "../../../components/adminform";
-import { Button, ButtonLink, Label, Notice, PageLoading, Sheet } from "../../../components/press";
+import { Button, ButtonLink, Label, Notice, PageLoading, Shell } from "../../../components/press";
 
 type Category = { id: number; name: string };
 
@@ -36,12 +36,6 @@ function EditProduct({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.dataset.section = "cobalt";
-    return () => {
-      delete document.documentElement.dataset.section;
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,14 +111,14 @@ function EditProduct({ id }: { id: string }) {
     return (
       <div className="min-h-screen">
         <Masthead />
-        <Sheet width="narrow" className="py-16">
+        <Shell width="narrow" className="py-16">
           <Notice>{loadError}</Notice>
           <div className="mt-6">
-            <ButtonLink href="/admin" tone="quiet">
+            <ButtonLink href="/admin" tone="secondary">
               กลับหน้าจัดการร้าน
             </ButtonLink>
           </div>
-        </Sheet>
+        </Shell>
       </div>
     );
   }
@@ -133,7 +127,7 @@ function EditProduct({ id }: { id: string }) {
     <div className="min-h-screen">
       <Masthead />
       <main>
-        <Sheet width="column" className="pb-20">
+        <Shell width="column" className="pb-20">
           <FormShell title="แก้ไขสินค้า" intro={`รหัสสินค้า #${id} — การเปลี่ยนแปลงจะมีผลกับหน้าร้านทันที`}>
             <form onSubmit={submit} noValidate className="space-y-6">
               {error && <Notice>{error}</Notice>}
@@ -200,7 +194,7 @@ function EditProduct({ id }: { id: string }) {
                     </select>
                   </div>
                 </div>
-                <p className="text-caption text-ink-mid">
+                <p className="text-caption text-muted">
                   การเปลี่ยนหมวดหมู่มีผลกับการกรองสินค้าในหน้าร้านทันที
                 </p>
               </Fieldset>
@@ -213,13 +207,13 @@ function EditProduct({ id }: { id: string }) {
                 <Button type="submit" size="lg" busy={saving} className="flex-1">
                   บันทึกการเปลี่ยนแปลง
                 </Button>
-                <Button type="button" tone="quiet" size="lg" onClick={() => router.push("/admin")}>
+                <Button type="button" tone="secondary" size="lg" onClick={() => router.push("/admin")}>
                   ยกเลิก
                 </Button>
               </div>
             </form>
           </FormShell>
-        </Sheet>
+        </Shell>
       </main>
       <SiteFoot />
     </div>

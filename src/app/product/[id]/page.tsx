@@ -1,15 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, CreditCard, Minus, PackageOpen, Plus, ShoppingCart, Truck } from "lucide-react";
+import {
+  ChevronRight,
+  CreditCard,
+  Minus,
+  PackageOpen,
+  Plus,
+  RotateCcw,
+  ShoppingBag,
+  Truck,
+} from "lucide-react";
 import Masthead from "../../components/masthead";
 import SiteFoot from "../../components/sitefoot";
 import { useMe } from "../../components/me";
 import { useFlash } from "../../components/flash";
-import { Button, ButtonLink, Money, Mark, Notice, Sheet, PageLoading, inkFor } from "../../components/press";
+import { Badge, Button, ButtonLink, Money, Notice, Shell, PageLoading } from "../../components/press";
 
 type Product = {
   id: number;
@@ -33,14 +42,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const [busy, setBusy] = useState<"cart" | "buy" | null>(null);
 
   const stock = product?.quantity ?? 0;
-  const ink = useMemo(() => inkFor(product?.category?.name ?? params.id), [product, params.id]);
-
-  useEffect(() => {
-    document.documentElement.dataset.section = ink;
-    return () => {
-      delete document.documentElement.dataset.section;
-    };
-  }, [ink]);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +52,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         if (!res.ok) throw new Error(data?.error ?? "");
         if (!cancelled) setProduct(data);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error && err.message ? err.message : "โหลดข้อมูลสินค้าไม่สำเร็จ");
+        if (!cancelled)
+          setError(err instanceof Error && err.message ? err.message : "โหลดข้อมูลสินค้าไม่สำเร็จ");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -91,174 +93,204 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="flex min-h-screen flex-col">
         <Masthead />
-        <PageLoading label="กำลังเปิดหน้าสินค้า" />
+        <PageLoading label="กำลังโหลดสินค้า" />
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen">
+      <div className="flex min-h-screen flex-col">
         <Masthead />
-        <Sheet width="narrow" className="py-16">
+        <Shell width="narrow" className="flex-1 py-16">
           <Notice>{error ?? "ไม่พบสินค้าชิ้นนี้"}</Notice>
           <div className="mt-6">
-            <ButtonLink href="/" tone="quiet">
-              กลับไปหน้าประกาศทั้งหมด
+            <ButtonLink href="/" tone="secondary">
+              กลับไปดูสินค้าทั้งหมด
             </ButtonLink>
           </div>
-        </Sheet>
+        </Shell>
+        <SiteFoot />
       </div>
     );
   }
 
+  const lineTotal = (product.price ?? 0) * quantity;
+
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <Masthead />
 
-      <main>
-        <Sheet className="pb-20 pt-6">
-          <nav aria-label="เส้นทาง" className="flex flex-wrap items-center gap-1 text-caption text-ink-mid">
-            <Link href="/" className="inline-flex min-h-[40px] items-center underline decoration-rule-mid hover:decoration-ink">
-              ประกาศทั้งหมด
+      <main className="flex-1">
+        <Shell className="pb-20 pt-5">
+          <nav aria-label="เส้นทาง" className="flex flex-wrap items-center gap-1 text-caption text-muted">
+            <Link
+              href="/"
+              className="inline-flex min-h-[36px] items-center transition-colors duration-150 hover:text-ink"
+            >
+              สินค้าทั้งหมด
             </Link>
             {product.category?.name && (
               <>
-                <ChevronRight size={13} aria-hidden className="text-rule-mid" />
-                <span className="font-semibold text-[var(--section-text)]">{product.category.name}</span>
+                <ChevronRight size={13} aria-hidden className="text-subtle" />
+                <Link
+                  href={`/?cat=${encodeURIComponent(product.category.name)}`}
+                  className="inline-flex min-h-[36px] items-center transition-colors duration-150 hover:text-ink"
+                >
+                  {product.category.name}
+                </Link>
               </>
             )}
           </nav>
 
-          <div className="mt-6 grid grid-cols-1 gap-px bg-rule lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            {/* The plate: the colour photograph, printed full. */}
-            <div className="relative aspect-[4/3] w-full bg-stock lg:aspect-auto lg:min-h-[520px]">
+          <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:gap-14">
+            {/* Gallery */}
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-canvas-2">
               {product.img ? (
                 <Image
                   src={product.img}
                   alt={product.title}
                   fill
                   priority
-                  sizes="(max-width: 1024px) 100vw, 600px"
-                  className="object-contain p-6"
+                  sizes="(max-width: 1024px) 100vw, 640px"
+                  className="object-cover"
                 />
               ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-ink-soft">
-                  <PackageOpen size={44} strokeWidth={1.5} aria-hidden />
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-subtle">
+                  <PackageOpen size={44} strokeWidth={1.4} aria-hidden />
                   <p className="text-small">ยังไม่มีรูปภาพสินค้า</p>
                 </div>
               )}
             </div>
 
-            {/* The entry. */}
-            <div className="flex flex-col bg-stock p-6 sm:p-10">
+            {/* Buy box */}
+            <div className="lg:sticky lg:top-28 lg:self-start">
               {product.category?.name && (
-                <p className="u-label !text-[var(--section-text)]">{product.category.name}</p>
-              )}
-              <h1 className="u-display mt-3 text-h3 leading-[1.15] sm:text-h2">{product.title}</h1>
-
-              <div className="mt-5 flex flex-wrap items-center gap-4">
-                <Money value={product.price} className="text-h1 leading-none text-[var(--section-text)]" />
-                {stock === 0 ? (
-                  <Mark tone="ink">หมดชั่วคราว</Mark>
-                ) : stock <= 3 ? (
-                  <Mark tone="scarlet">เหลือ {stock} ชิ้น</Mark>
-                ) : (
-                  <Mark tone="quiet">คงเหลือ {stock} ชิ้น</Mark>
-                )}
-              </div>
-
-              <p className="mt-5 flex items-center gap-2 border-y border-rule py-3 text-caption text-ink-mid">
-                <Truck size={15} aria-hidden className="text-ink-soft" />
-                ค่าจัดส่ง ฿36 ต่อคำสั่งซื้อ ไม่ว่าจะสั่งกี่ชิ้น
-              </p>
-
-              <div className="mt-6">
-                <h2 className="u-label mb-2">รายละเอียดสินค้า</h2>
-                <p className="u-measure whitespace-pre-line text-base text-ink-mid">
-                  {product.content?.trim() || "ทางร้านยังไม่ได้ระบุรายละเอียดของสินค้าชิ้นนี้"}
+                <p className="text-micro font-medium uppercase tracking-wide text-subtle">
+                  {product.category.name}
                 </p>
-              </div>
+              )}
+              <h1 className="u-display mt-2 text-h3 sm:text-h2">{product.title}</h1>
 
-              <div className="mt-auto pt-8">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Money value={product.price} className="!text-h1" />
                 {stock === 0 ? (
-                  <Notice tone="info">
-                    สินค้าชิ้นนี้หมดชั่วคราว ลองดูประกาศอื่นในหมวดเดียวกัน หรือกลับมาตรวจสอบอีกครั้งภายหลัง
-                  </Notice>
-                ) : !me ? (
-                  <div className="space-y-4">
-                    <p className="text-small text-ink-mid">เข้าสู่ระบบเพื่อใส่ตะกร้าและสั่งซื้อสินค้าชิ้นนี้</p>
-                    <div className="flex flex-wrap gap-2">
-                      <ButtonLink href="/user/login" size="lg">
-                        เข้าสู่ระบบ
-                      </ButtonLink>
-                      <ButtonLink href="/user/register" tone="quiet" size="lg">
-                        สมัครสมาชิก
-                      </ButtonLink>
-                    </div>
-                  </div>
+                  <Badge tone="solid">สินค้าหมด</Badge>
+                ) : stock <= 3 ? (
+                  <Badge tone="sale">เหลือ {stock} ชิ้น</Badge>
                 ) : (
-                  <div className="space-y-5">
-                    <div className="flex flex-wrap items-center gap-4">
-                      <span className="u-label">จำนวน</span>
-                      <div className="flex items-stretch border border-ink">
-                        <button
-                          type="button"
-                          onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                          disabled={quantity <= 1}
-                          aria-label="ลดจำนวน"
-                          className="inline-flex h-11 w-11 items-center justify-center transition-colors duration-150 hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:text-rule-mid"
-                        >
-                          <Minus size={16} aria-hidden />
-                        </button>
-                        <output
-                          aria-live="polite"
-                          className="u-fig flex h-11 w-14 items-center justify-center border-x border-ink text-lead font-bold"
-                        >
-                          {quantity}
-                        </output>
-                        <button
-                          type="button"
-                          onClick={() => setQuantity((q) => Math.min(stock, q + 1))}
-                          disabled={quantity >= stock}
-                          aria-label="เพิ่มจำนวน"
-                          className="inline-flex h-11 w-11 items-center justify-center transition-colors duration-150 hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:text-rule-mid"
-                        >
-                          <Plus size={16} aria-hidden />
-                        </button>
-                      </div>
-                      <p className="text-small text-ink-mid">
-                        รวม <Money value={(product.price ?? 0) * quantity} className="text-base text-ink" />
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <Button
-                        tone="quiet"
-                        size="lg"
-                        busy={busy === "cart"}
-                        onClick={() => addToCart("cart")}
-                        disabled={busy !== null}
-                      >
-                        <ShoppingCart size={18} aria-hidden /> ใส่ตะกร้า
-                      </Button>
-                      <Button
-                        size="lg"
-                        busy={busy === "buy"}
-                        onClick={() => addToCart("buy")}
-                        disabled={busy !== null}
-                      >
-                        <CreditCard size={18} aria-hidden /> ซื้อเลย
-                      </Button>
-                    </div>
-                  </div>
+                  <Badge tone="go">พร้อมส่ง {stock} ชิ้น</Badge>
                 )}
               </div>
+
+              {stock === 0 ? (
+                <div className="mt-6">
+                  <Notice tone="info">
+                    สินค้าชิ้นนี้หมดชั่วคราว ลองดูสินค้าอื่นในหมวดเดียวกัน หรือกลับมาตรวจสอบอีกครั้งภายหลัง
+                  </Notice>
+                  <div className="mt-4">
+                    <ButtonLink
+                      href={product.category?.name ? `/?cat=${encodeURIComponent(product.category.name)}` : "/"}
+                      tone="secondary"
+                      size="lg"
+                      className="w-full"
+                    >
+                      ดูสินค้าอื่นในหมวดนี้
+                    </ButtonLink>
+                  </div>
+                </div>
+              ) : !me ? (
+                <div className="mt-6 space-y-3">
+                  <ButtonLink href="/user/login" size="lg" className="w-full">
+                    เข้าสู่ระบบเพื่อสั่งซื้อ
+                  </ButtonLink>
+                  <ButtonLink href="/user/register" tone="secondary" size="lg" className="w-full">
+                    สมัครสมาชิก
+                  </ButtonLink>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-small font-semibold">จำนวน</span>
+                    <div className="flex items-stretch overflow-hidden rounded-sm border border-line-strong">
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        disabled={quantity <= 1}
+                        aria-label="ลดจำนวน"
+                        className="inline-flex h-11 w-11 items-center justify-center transition-colors duration-150 hover:bg-canvas-2 disabled:pointer-events-none disabled:text-line-strong"
+                      >
+                        <Minus size={16} aria-hidden />
+                      </button>
+                      <output
+                        aria-live="polite"
+                        className="u-fig flex h-11 w-14 items-center justify-center border-x border-line-strong font-display text-base font-semibold"
+                      >
+                        {quantity}
+                      </output>
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((q) => Math.min(stock, q + 1))}
+                        disabled={quantity >= stock}
+                        aria-label="เพิ่มจำนวน"
+                        className="inline-flex h-11 w-11 items-center justify-center transition-colors duration-150 hover:bg-canvas-2 disabled:pointer-events-none disabled:text-line-strong"
+                      >
+                        <Plus size={16} aria-hidden />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline justify-between gap-4 border-y border-line py-3">
+                    <span className="text-small text-muted">ราคารวม</span>
+                    <Money value={lineTotal} className="!text-h4" />
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className="w-full"
+                    busy={busy === "buy"}
+                    disabled={busy !== null}
+                    onClick={() => addToCart("buy")}
+                  >
+                    <CreditCard size={18} aria-hidden /> ซื้อเลย
+                  </Button>
+                  <Button
+                    tone="secondary"
+                    size="lg"
+                    className="w-full"
+                    busy={busy === "cart"}
+                    disabled={busy !== null}
+                    onClick={() => addToCart("cart")}
+                  >
+                    <ShoppingBag size={18} aria-hidden /> ใส่ตะกร้า
+                  </Button>
+                </div>
+              )}
+
+              <ul className="mt-6 space-y-3 rounded border border-line bg-canvas-2 p-4">
+                <li className="flex items-start gap-2.5 text-caption text-muted">
+                  <Truck size={16} aria-hidden className="mt-0.5 shrink-0 text-ink" />
+                  ค่าจัดส่งคงที่ ฿36 ต่อคำสั่งซื้อ ไม่ว่าจะสั่งกี่ชิ้น
+                </li>
+                <li className="flex items-start gap-2.5 text-caption text-muted">
+                  <RotateCcw size={16} aria-hidden className="mt-0.5 shrink-0 text-ink" />
+                  หากได้รับสินค้าไม่ตรงตามรายละเอียด แจ้งทางร้านได้ภายใน 7 วัน
+                </li>
+              </ul>
             </div>
           </div>
-        </Sheet>
+
+          <section aria-labelledby="pdp-detail" className="mt-14 border-t border-line pt-8">
+            <h2 id="pdp-detail" className="u-display text-h4">
+              รายละเอียดสินค้า
+            </h2>
+            <p className="u-measure mt-3 whitespace-pre-line text-base text-muted">
+              {product.content?.trim() || "ทางร้านยังไม่ได้ระบุรายละเอียดของสินค้าชิ้นนี้"}
+            </p>
+          </section>
+        </Shell>
       </main>
 
       <SiteFoot />

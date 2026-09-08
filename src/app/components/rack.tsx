@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, PackageOpen, X } from "lucide-react";
-import { Money, Mark, Empty, Notice, inkFor, type SectionInk } from "./press";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { PackageOpen, SlidersHorizontal, X } from "lucide-react";
+import { Badge, Money, Empty, Notice, Skeleton } from "./press";
 
 type Category = { id: number; name: string; _count?: { posts: number } };
 type Product = {
@@ -16,37 +17,41 @@ type Product = {
   category?: { name: string } | null;
 };
 
+type Sort = "new" | "price-asc" | "price-desc";
+
+const SORTS: { id: Sort; label: string }[] = [
+  { id: "new", label: "สินค้าใหม่ล่าสุด" },
+  { id: "price-asc", label: "ราคาต่ำไปสูง" },
+  { id: "price-desc", label: "ราคาสูงไปต่ำ" },
+];
+
 /**
- * The rack: the classified section itself.
- *
- * Choosing a category re-rules the whole page in one move — the masthead flash,
- * the index, the section head and every cell shoulder take that section's ink
- * together, because the ink lives on the document root.
+ * The catalogue. Category and search live in the URL, so a filtered view is
+ * shareable and the browser's back button behaves the way shoppers expect.
  */
 export default function Rack({ hrefBase = "/product" }: { hrefBase?: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+
+  const category = params.get("cat") ?? "";
+  const search = params.get("q") ?? "";
+  const sort = (params.get("sort") as Sort) || "new";
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState("");
-  const [rawSearch, setRawSearch] = useState("");
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const firstLoad = useRef(true);
 
-  const ink: SectionInk = useMemo(() => inkFor(category), [category]);
-
-  // One control, the whole sheet: the section ink is set on the document root.
-  useEffect(() => {
-    document.documentElement.dataset.section = ink;
-    return () => {
-      delete document.documentElement.dataset.section;
-    };
-  }, [ink]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setSearch(rawSearch.trim()), 300);
-    return () => clearTimeout(t);
-  }, [rawSearch]);
+  const setParam = useCallback(
+    (key: string, value: string) => {
+      const next = new URLSearchParams(params.toString());
+      if (value) next.set(key, value);
+      else next.delete(key);
+      router.replace(next.toString() ? `${pathname}?${next}` : pathname, { scroll: false });
+    },
+    [params, pathname, router],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -59,100 +64,104 @@ export default function Rack({ hrefBase = "/product" }: { hrefBase?: string }) {
     };
   }, []);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError(null);
-    try {
-      const query = new URLSearchParams({ category, search }).toString();
-      const res = await fetch(`/api?${query}`, { cache: "no-store" });
-      if (!res.ok) throw new Error();
-      setProducts(await res.json());
-    } catch {
-      setError("โหลดรายการสินค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
-      setProducts([]);
-    } finally {
-      setLoading(false);
-      firstLoad.current = false;
-    }
+    const query = new URLSearchParams({ category, search }).toString();
+    fetch(`/api?${query}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error())))
+      .then((data) => !cancelled && setProducts(Array.isArray(data) ? data : []))
+      .catch(() => {
+        if (cancelled) return;
+        setError("โหลดรายการสินค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+        setProducts([]);
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
   }, [category, search]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const sorted = useMemo(() => {
+    const list = [...products];
+    if (sort === "price-asc") list.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+    if (sort === "price-desc") list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+    return list;
+  }, [products, sort]);
 
-  const total = categories.reduce((sum, c) => sum + (c._count?.posts ?? 0), 0);
   const filtered = Boolean(category || search);
 
   return (
-    <section aria-labelledby="rack-heading">
-      <h2 id="rack-heading" className="sr-only">
-        รายการสินค้า
-      </h2>
-
-      {/* The index: sections and their counts, ruled like a table of contents. */}
-      <nav aria-label="หมวดสินค้า" className="border-t-2 border-ink">
-        <ul className="flex flex-wrap border-b-2 border-ink">
-          <IndexCell
-            active={category === ""}
-            count={total || undefined}
-            onSelect={() => setCategory("")}
-          >
-            ทั้งหมด
-          </IndexCell>
+    <section aria-labelledby="catalogue-heading">
+      {/* Category rail. Scrolls sideways on a phone rather than wrapping into
+          an unpredictable number of rows. */}
+      <nav aria-label="หมวดสินค้า" className="-mx-4 px-4 sm:mx-0 sm:px-0">
+        <ul className="flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <li>
+            <Chip active={category === ""} onSelect={() => setParam("cat", "")}>
+              ทั้งหมด
+            </Chip>
+          </li>
           {categories.map((c) => (
-            <IndexCell
-              key={c.id}
-              active={category === c.name}
-              count={c._count?.posts}
-              onSelect={() => setCategory(category === c.name ? "" : c.name)}
-            >
-              {c.name}
-            </IndexCell>
+            <li key={c.id}>
+              <Chip
+                active={category === c.name}
+                count={c._count?.posts}
+                onSelect={() => setParam("cat", category === c.name ? "" : c.name)}
+              >
+                {c.name}
+              </Chip>
+            </li>
           ))}
         </ul>
       </nav>
 
-      {/* The search slug. */}
-      <div className="relative mt-6">
-        <label htmlFor="rack-search" className="sr-only">
-          ค้นหาสินค้า
-        </label>
-        <Search
-          size={18}
-          aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
-        />
-        <input
-          id="rack-search"
-          type="search"
-          value={rawSearch}
-          onChange={(e) => setRawSearch(e.target.value)}
-          placeholder="ค้นหาชื่อสินค้า"
-          className="u-field !pl-10 !pr-10"
-        />
-        {rawSearch && (
-          <button
-            type="button"
-            onClick={() => setRawSearch("")}
-            aria-label="ล้างคำค้นหา"
-            className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center text-ink-mid transition-colors duration-150 hover:text-ink"
-          >
-            <X size={16} aria-hidden />
-          </button>
-        )}
-      </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-line pb-4">
+        <div className="min-w-0">
+          <h2 id="catalogue-heading" className="u-display text-h3">
+            {category || (search ? `ผลการค้นหา “${search}”` : "สินค้าทั้งหมด")}
+          </h2>
+          <p className="mt-1 text-small text-muted" aria-live="polite">
+            {loading ? (
+              "กำลังโหลด…"
+            ) : (
+              <>
+                <span className="u-fig font-semibold text-ink">{sorted.length}</span> รายการ
+              </>
+            )}
+          </p>
+        </div>
 
-      {/* The running head for this section of the sheet. */}
-      <div className="mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h3 className="u-display text-h3">{category || "ประกาศทั้งหมด"}</h3>
-        <p className="text-small text-ink-mid" aria-live="polite">
-          {loading ? "กำลังจัดหน้า…" : <><span className="u-fig font-bold text-ink">{products.length}</span> รายการ</>}
-          {search && !loading && <> จากคำค้น “{search}”</>}
-        </p>
-      </div>
-      <div className="mt-3 flex" aria-hidden>
-        <div className="h-[3px] w-24 bg-[var(--section-fill)] transition-colors duration-300 ease-press" />
-        <div className="h-[3px] flex-1 bg-ink" />
+        <div className="flex items-center gap-2">
+          {filtered && (
+            <button
+              type="button"
+              onClick={() => router.replace(pathname, { scroll: false })}
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-sm px-2.5 text-caption font-medium text-muted transition-colors duration-150 hover:bg-canvas-2 hover:text-ink"
+            >
+              <X size={14} aria-hidden /> ล้างตัวกรอง
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal size={15} aria-hidden className="text-subtle" />
+            <label htmlFor="rack-sort" className="sr-only">
+              เรียงลำดับสินค้า
+            </label>
+            <select
+              id="rack-sort"
+              value={sort}
+              onChange={(e) => setParam("sort", e.target.value === "new" ? "" : e.target.value)}
+              className="u-field !min-h-[40px] !w-auto !border-line !py-1.5 !text-caption"
+            >
+              {SORTS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -162,50 +171,43 @@ export default function Rack({ hrefBase = "/product" }: { hrefBase?: string }) {
       )}
 
       {loading ? (
-        <ul className="mt-6 grid grid-cols-2 gap-px bg-rule sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <li key={i} className="bg-stock p-3">
-              <div className="aspect-[4/3] w-full bg-paper-deep" />
-              <div className="mt-3 h-4 w-4/5 bg-paper-deep" />
-              <div className="mt-2 h-4 w-2/5 bg-paper-deep" />
-              <div className="mt-4 h-6 w-1/2 bg-paper-deep" />
+        <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <li key={i}>
+              <Skeleton className="aspect-square w-full !rounded" />
+              <Skeleton className="mt-3 h-4 w-4/5" />
+              <Skeleton className="mt-2 h-4 w-2/5" />
+              <Skeleton className="mt-3 h-5 w-1/2" />
             </li>
           ))}
           <li className="sr-only">กำลังโหลดรายการสินค้า</li>
         </ul>
-      ) : products.length > 0 ? (
-        <ul className="mt-6 grid grid-cols-2 gap-px bg-rule sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((product, i) => (
-            <li
-              key={product.id}
-              className="animate-ink-settle"
-              style={{ animationDelay: `${Math.min(i, 11) * 26}ms` }}
-            >
-              <ProductCell product={product} hrefBase={hrefBase} />
+      ) : sorted.length > 0 ? (
+        <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {sorted.map((product, i) => (
+            <li key={product.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 9) * 30}ms` }}>
+              <ProductCard product={product} hrefBase={hrefBase} />
             </li>
           ))}
         </ul>
       ) : (
         <div className="mt-6">
           <Empty
-            icon={<PackageOpen size={40} strokeWidth={1.5} aria-hidden />}
+            icon={<PackageOpen size={26} strokeWidth={1.6} aria-hidden />}
             title={filtered ? "ไม่พบสินค้าที่ตรงกับที่ค้นหา" : "ยังไม่มีสินค้าวางขาย"}
             body={
               filtered
-                ? "ลองใช้คำค้นที่สั้นลง หรือดูประกาศทั้งหมดของวันนี้"
+                ? "ลองใช้คำค้นที่สั้นลง หรือดูสินค้าทั้งหมดของทางร้าน"
                 : "เมื่อทางร้านลงสินค้าใหม่ รายการจะขึ้นที่หน้านี้ทันที"
             }
             action={
               filtered ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    setCategory("");
-                    setRawSearch("");
-                  }}
-                  className="inline-flex min-h-[46px] items-center border border-ink px-5 font-display text-small font-semibold transition-colors duration-150 hover:bg-ink hover:text-paper"
+                  onClick={() => router.replace(pathname, { scroll: false })}
+                  className="inline-flex min-h-[44px] items-center rounded-sm border border-line-strong px-5 font-display text-small font-semibold transition-colors duration-150 hover:bg-canvas-2"
                 >
-                  ดูประกาศทั้งหมด
+                  ดูสินค้าทั้งหมด
                 </button>
               ) : undefined
             }
@@ -216,7 +218,7 @@ export default function Rack({ hrefBase = "/product" }: { hrefBase?: string }) {
   );
 }
 
-function IndexCell({
+function Chip({
   active,
   count,
   onSelect,
@@ -228,74 +230,68 @@ function IndexCell({
   children: React.ReactNode;
 }) {
   return (
-    <li className="border-b border-r border-rule">
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-pressed={active}
-        className={`flex min-h-[46px] items-baseline gap-2 px-4 font-display text-small font-semibold transition-colors duration-200 ease-press ${
-          active
-            ? "bg-[var(--section-fill)] text-[var(--section-on)]"
-            : "text-ink hover:bg-paper-deep"
-        }`}
-      >
-        {children}
-        {count !== undefined && (
-          <span className={`u-fig text-caption ${active ? "opacity-80" : "text-ink-soft"}`}>{count}</span>
-        )}
-      </button>
-    </li>
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={active}
+      className={`inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small font-medium transition-colors duration-150 ${
+        active
+          ? "border-brand bg-brand text-brand-on"
+          : "border-line-strong bg-surface text-ink hover:bg-canvas-2"
+      }`}
+    >
+      {children}
+      {count !== undefined && (
+        <span className={`u-fig text-caption ${active ? "opacity-70" : "text-subtle"}`}>{count}</span>
+      )}
+    </button>
   );
 }
 
-function ProductCell({ product, hrefBase }: { product: Product; hrefBase: string }) {
+function ProductCard({ product, hrefBase }: { product: Product; hrefBase: string }) {
   const stock = product.quantity ?? 0;
-  const ink = inkFor(product.category?.name ?? product.id);
 
   return (
-    <Link
-      href={`${hrefBase}/${product.id}`}
-      data-section={ink}
-      className="group flex h-full flex-col bg-stock outline-offset-[-2px] transition-colors duration-200 hover:bg-white"
-    >
-      <div className="h-[3px] bg-[var(--section-fill)]" aria-hidden />
-
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-paper-deep">
+    <Link href={`${hrefBase}/${product.id}`} className="group block">
+      <div className="relative aspect-square w-full overflow-hidden rounded bg-canvas-2">
         {product.img ? (
           <Image
             src={product.img}
             alt={product.title}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-            className="object-cover transition-transform duration-500 ease-press group-hover:scale-[1.03]"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 260px"
+            className={`object-cover transition-transform duration-500 ease-ease group-hover:scale-[1.04] ${
+              stock === 0 ? "opacity-45 saturate-50" : ""
+            }`}
           />
         ) : (
-          <span className="flex h-full items-center justify-center text-ink-soft">
-            <PackageOpen size={28} strokeWidth={1.5} aria-hidden />
+          <span className="flex h-full items-center justify-center text-subtle">
+            <PackageOpen size={30} strokeWidth={1.4} aria-hidden />
           </span>
         )}
+
         {stock === 0 && (
-          <span className="absolute left-0 top-0">
-            <Mark tone="ink">หมดชั่วคราว</Mark>
+          <span className="absolute inset-0 flex items-center justify-center bg-surface/45">
+            <Badge tone="solid">สินค้าหมด</Badge>
           </span>
         )}
         {stock > 0 && stock <= 3 && (
-          <span className="absolute left-0 top-0">
-            <Mark tone="scarlet">เหลือ {stock} ชิ้น</Mark>
+          <span className="absolute left-2 top-2">
+            <Badge tone="sale">เหลือ {stock} ชิ้น</Badge>
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col border-t border-rule p-3">
+      <div className="pt-3">
         {product.category?.name && (
-          <span className="u-label !text-[var(--section-text)] mb-1.5">{product.category.name}</span>
+          <p className="text-micro font-medium uppercase tracking-wide text-subtle">
+            {product.category.name}
+          </p>
         )}
-        <h4 className="text-small font-semibold leading-snug text-ink line-clamp-2 group-hover:underline">
+        <h3 className="mt-1 line-clamp-2 min-h-[44px] text-small text-ink group-hover:underline">
           {product.title}
-        </h4>
-        <div className="mt-auto pt-3">
-          <Money value={product.price} className="text-h4" />
-        </div>
+        </h3>
+        <Money value={product.price} className="mt-2 block text-h4" />
       </div>
     </Link>
   );

@@ -2,155 +2,235 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── THE CLASSIFIED ───────────────────────────────────────────────────────
-   Newsprint ground, hairline rules as the material, four section inks that
-   own whole regions. No radius, no shadow: depth is paper stock and rule
-   weight, the way a printed page has depth.
+/* ── KABSHOP ──────────────────────────────────────────────────────────────
+   Modern retail commerce, executed straight. A warm-neutral canvas, white
+   product surfaces, near-black actions, and colour reserved for the two
+   things a shopper must never misread: price urgency and order state.
    ──────────────────────────────────────────────────────────────────────── */
 
+/* Single source of truth: each colour is stored as RGB channels so Tailwind's
+   opacity modifiers (bg-ink/45) work, with a plain alias for hand-written CSS. */
 :root {
-  --paper: #edebe4;
-  --paper-deep: #e3e0d6;
-  --stock: #fbfaf7;
+  --c-canvas: 255 255 255;
+  --c-canvas-2: 247 246 244;
+  --c-canvas-3: 239 237 234;
+  --c-surface: 255 255 255;
 
-  --ink: #191813;
-  --ink-mid: #57554a;
-  --ink-soft: #656358;
+  --c-ink: 22 22 26;
+  --c-muted: 92 92 102;
+  --c-subtle: 107 107 116;
 
-  --rule: #c9c6b8;
-  --rule-mid: #ada99a;
+  --c-line: 230 228 224;
+  --c-line-strong: 211 208 202;
 
-  /* The four section inks. A category takes one; it then owns the page. */
-  --scarlet: #c81e24;
-  --scarlet-text: #a81318;
-  --cobalt: #1240c4;
-  --cobalt-text: #1240c4;
-  --jade: #0b6b4f;
-  --jade-text: #0a5f46;
-  --chrome: #e9a400;
-  --chrome-text: #8a5a00;
+  --c-brand: 22 22 26;
+  --c-brand-hover: 0 0 0;
+  --c-brand-on: 255 255 255;
 
-  /* Live section. Re-set as one when a category is chosen. */
-  --section-fill: var(--scarlet);
-  --section-text: var(--scarlet-text);
-  --section-on: #ffffff;
+  --c-sale: 214 48 31;
+  --c-sale-text: 189 36 21;
+  --c-sale-soft: 253 236 235;
+  --c-go: 15 123 79;
+  --c-go-text: 12 102 66;
+  --c-go-soft: 232 244 238;
 
-  --ease-press: cubic-bezier(0.16, 1, 0.3, 1);
+  --c-focus: 30 94 255;
+
+  --canvas: rgb(var(--c-canvas));
+  --canvas-2: rgb(var(--c-canvas-2));
+  --canvas-3: rgb(var(--c-canvas-3));
+  --surface: rgb(var(--c-surface));
+  --ink: rgb(var(--c-ink));
+  --muted: rgb(var(--c-muted));
+  --subtle: rgb(var(--c-subtle));
+  --line: rgb(var(--c-line));
+  --line-strong: rgb(var(--c-line-strong));
+  --brand: rgb(var(--c-brand));
+  --brand-hover: rgb(var(--c-brand-hover));
+  --brand-on: rgb(var(--c-brand-on));
+  --sale: rgb(var(--c-sale));
+  --sale-text: rgb(var(--c-sale-text));
+  --sale-soft: rgb(var(--c-sale-soft));
+  --go: rgb(var(--c-go));
+  --go-text: rgb(var(--c-go-text));
+  --go-soft: rgb(var(--c-go-soft));
+  --focus: rgb(var(--c-focus));
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 1px 2px rgb(var(--c-ink) / 0.05);
+  --shadow-lift: 0 2px 4px rgb(var(--c-ink) / 0.05), 0 12px 28px -12px rgb(var(--c-ink) / 0.22);
+  --shadow-pop: 0 4px 8px rgb(var(--c-ink) / 0.06), 0 24px 48px -20px rgb(var(--c-ink) / 0.28);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-[data-section="scarlet"] { --section-fill: var(--scarlet); --section-text: var(--scarlet-text); --section-on: #ffffff; }
-[data-section="cobalt"]  { --section-fill: var(--cobalt);  --section-text: var(--cobalt-text);  --section-on: #ffffff; }
-[data-section="jade"]    { --section-fill: var(--jade);    --section-text: var(--jade-text);    --section-on: #ffffff; }
-[data-section="chrome"]  { --section-fill: var(--chrome);  --section-text: var(--chrome-text);  --section-on: var(--ink); }
-
-* { -webkit-tap-highlight-color: transparent; }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 
 html {
-  scrollbar-color: var(--rule-mid) var(--paper);
-  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) var(--canvas-2);
 }
 
 body {
-  background-color: var(--paper);
-  /* The press: a faint fibre tooth so the ground reads as stock, not as #EEE. */
-  background-image:
-    repeating-linear-gradient(0deg, rgba(25, 24, 19, 0.022) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(25, 24, 19, 0.016) 0 1px, transparent 1px 4px);
+  background-color: var(--canvas);
   color: var(--ink);
   font-family: var(--font-text), system-ui, sans-serif;
   font-feature-settings: "liga" 1, "kern" 1;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* The parts we did not draw still carry the design. */
-::selection { background: var(--section-fill); color: var(--section-on); }
-:root { caret-color: var(--section-fill); accent-color: var(--section-fill); }
-
-::-webkit-scrollbar { width: 12px; height: 12px; }
-::-webkit-scrollbar-track { background: var(--paper); border-left: 1px solid var(--rule); }
-::-webkit-scrollbar-thumb { background: var(--rule-mid); border: 3px solid var(--paper); }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
-
-:focus-visible {
-  outline: 2px solid var(--section-fill);
-  outline-offset: 2px;
+::selection {
+  background: rgb(var(--c-focus) / 0.18);
+  color: var(--ink);
+}
+:root {
+  caret-color: var(--focus);
+  accent-color: var(--brand);
 }
 
-a { text-underline-offset: 0.22em; text-decoration-thickness: from-font; }
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--canvas-2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid var(--canvas-2);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--subtle);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+a {
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: from-font;
+}
 
 /* ── Type roles ─────────────────────────────────────────────────────────── */
 
 .u-display {
   font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: -0.015em;
   text-wrap: balance;
 }
 
-/* One numeral treatment. Price, stock, total, serial — same face, same
-   figures, same alignment, on the storefront and on the receipt alike. */
+/* One numeral treatment for every figure a shopper reads as money or count:
+   price, stock, quantity, totals, order number. Tabular so columns line up. */
 .u-fig {
-  font-family: var(--font-display), system-ui, sans-serif;
   font-variant-numeric: tabular-nums lining;
   font-feature-settings: "tnum" 1, "lnum" 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .u-label {
-  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
   font-weight: 600;
-  font-size: 11px;
-  line-height: 14px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink-mid);
+  letter-spacing: 0.02em;
+  color: var(--muted);
 }
 
-.u-measure { max-width: 68ch; }
-
-/* ── Print furniture ────────────────────────────────────────────────────── */
-
-/* The spine: one continuous vertical rule every region registers to. */
-.u-spine { box-shadow: inset 1px 0 0 var(--rule); }
-
-.u-cell {
-  background: var(--stock);
-  border: 1px solid var(--rule);
+.u-measure {
+  max-width: 68ch;
 }
 
-.u-rule-draw { transform-origin: left center; }
+/* ── Surfaces ───────────────────────────────────────────────────────────── */
 
-/* Fields are compositor's slugs: a hairline box under a thick baseline. */
+.u-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* ── Fields ─────────────────────────────────────────────────────────────── */
+
 .u-field {
   width: 100%;
-  background: var(--stock);
-  border: 1px solid var(--rule-mid);
-  border-bottom-width: 2px;
-  border-bottom-color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
   color: var(--ink);
-  padding: 11px 12px;
+  padding: 11px 14px;
   font-size: 16px;
   line-height: 24px;
-  transition: border-color 160ms var(--ease-press), background-color 160ms var(--ease-press);
+  transition:
+    border-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
 }
-.u-field::placeholder { color: var(--ink-soft); }
-.u-field:hover:not(:disabled) { border-color: var(--ink-mid); border-bottom-color: var(--ink); }
-.u-field:focus { border-color: var(--section-fill); border-bottom-color: var(--section-fill); outline: none; }
-.u-field:disabled { background: var(--paper-deep); color: var(--ink-soft); border-bottom-color: var(--rule-mid); cursor: not-allowed; }
-.u-field[aria-invalid="true"] { border-color: var(--scarlet); border-bottom-color: var(--scarlet); }
+.u-field::placeholder {
+  color: var(--subtle);
+}
+.u-field:hover:not(:disabled) {
+  border-color: var(--subtle);
+}
+.u-field:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.16);
+}
+.u-field:disabled {
+  background: var(--canvas-2);
+  color: var(--subtle);
+  cursor: not-allowed;
+}
+.u-field[aria-invalid="true"] {
+  border-color: var(--sale);
+}
+.u-field[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(214, 48, 31, 0.16);
+}
 
 select.u-field {
   appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
-    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
-  background-position: right 18px center, right 12px center;
-  background-size: 6px 6px, 6px 6px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    right 18px center,
+    right 12px center;
+  background-size:
+    6px 6px,
+    6px 6px;
   background-repeat: no-repeat;
-  padding-right: 34px;
+  padding-right: 36px;
+}
+
+/* ── Skeletons ──────────────────────────────────────────────────────────── */
+
+@keyframes u-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.u-skeleton {
+  background: linear-gradient(90deg, var(--canvas-2) 25%, var(--canvas-3) 37%, var(--canvas-2) 63%);
+  background-size: 200% 100%;
+  animation: u-shimmer 1.4s linear infinite;
+  border-radius: var(--radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

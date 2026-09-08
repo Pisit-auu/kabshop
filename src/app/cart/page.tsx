@@ -10,7 +10,7 @@ import SiteFoot from "../components/sitefoot";
 import RequireAuth from "../components/requireauth";
 import { useMe } from "../components/me";
 import { useFlash } from "../components/flash";
-import { Button, ButtonLink, Empty, Mark, Money, Notice, RunningHead, Sheet, Skeleton } from "../components/press";
+import { Button, ButtonLink, Empty, Badge, Money, Notice, PageHead, Shell, Skeleton } from "../components/press";
 
 const SHIPPING_COST = 36;
 
@@ -127,8 +127,8 @@ function Cart() {
       <Masthead />
 
       <main>
-        <Sheet className="pb-20">
-          <RunningHead
+        <Shell className="pb-20">
+          <PageHead
             title="ตะกร้าสินค้า"
             meta={
               loading
@@ -146,9 +146,9 @@ function Cart() {
           )}
 
           {loading ? (
-            <div className="mt-8 space-y-px bg-rule">
+            <div className="u-card mt-8 divide-y divide-line overflow-hidden">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="flex gap-4 bg-stock p-4">
+                <div key={i} className="flex gap-4 p-4">
                   <Skeleton className="h-24 w-24 shrink-0" />
                   <div className="flex-1 space-y-3 pt-2">
                     <Skeleton className="h-4 w-2/3" />
@@ -170,20 +170,20 @@ function Cart() {
             <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
               {/* The order lines. */}
               <section aria-label="รายการในตะกร้า">
-                <ul className="space-y-px bg-rule">
+                <ul className="u-card divide-y divide-line overflow-hidden">
                   {lines.map((line) => {
                     const stock = line.post.quantity ?? 0;
                     const busy = pending === line.id;
                     return (
-                      <li key={line.id} className="flex gap-4 bg-stock p-4">
+                      <li key={line.id} className="flex gap-4 p-4">
                         <Link
                           href={`/product/${line.postId}`}
-                          className="relative h-24 w-24 shrink-0 overflow-hidden border border-rule bg-paper-deep"
+                          className="relative h-24 w-24 shrink-0 overflow-hidden rounded border border-line bg-canvas-2"
                         >
                           {line.post.img ? (
                             <Image src={line.post.img} alt={line.post.title} fill sizes="96px" className="object-cover" />
                           ) : (
-                            <span className="flex h-full items-center justify-center text-ink-soft">
+                            <span className="flex h-full items-center justify-center text-subtle">
                               <PackageOpen size={22} strokeWidth={1.5} aria-hidden />
                             </span>
                           )}
@@ -198,12 +198,12 @@ function Cart() {
                               >
                                 {line.post.title}
                               </Link>
-                              <p className="mt-1 text-caption text-ink-mid">
+                              <p className="mt-1 text-caption text-muted">
                                 ชิ้นละ <Money value={line.post.price} className="text-caption text-ink" />
                                 {stock <= 3 && (
                                   <>
                                     {" · "}
-                                    <span className="text-scarlet-text">คงเหลือ {stock} ชิ้น</span>
+                                    <span className="text-sale-text">คงเหลือ {stock} ชิ้น</span>
                                   </>
                                 )}
                               </p>
@@ -213,24 +213,24 @@ function Cart() {
                               onClick={() => setQuantity(line, 0)}
                               disabled={busy}
                               aria-label={`นำ ${line.post.title} ออกจากตะกร้า`}
-                              className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-ink-soft transition-colors duration-150 hover:text-scarlet-text disabled:opacity-40"
+                              className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-subtle transition-colors duration-150 hover:text-sale-text disabled:opacity-40"
                             >
                               <Trash2 size={17} aria-hidden />
                             </button>
                           </div>
 
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex items-stretch border border-rule-mid">
+                            <div className="flex items-stretch border border-line-strong">
                               <button
                                 type="button"
                                 onClick={() => setQuantity(line, line.value - 1)}
                                 disabled={busy || line.value <= 1}
                                 aria-label="ลดจำนวน"
-                                className="inline-flex h-10 w-10 items-center justify-center transition-colors duration-150 hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:text-rule-mid"
+                                className="inline-flex h-10 w-10 items-center justify-center transition-colors duration-150 hover:bg-ink hover:text-canvas disabled:pointer-events-none disabled:text-line-strong"
                               >
                                 <Minus size={15} aria-hidden />
                               </button>
-                              <output className="u-fig flex h-10 w-12 items-center justify-center border-x border-rule-mid font-bold">
+                              <output className="u-fig flex h-10 w-12 items-center justify-center border-x border-line-strong font-bold">
                                 {busy ? "·" : line.value}
                               </output>
                               <button
@@ -238,7 +238,7 @@ function Cart() {
                                 onClick={() => setQuantity(line, line.value + 1)}
                                 disabled={busy || line.value >= stock}
                                 aria-label="เพิ่มจำนวน"
-                                className="inline-flex h-10 w-10 items-center justify-center transition-colors duration-150 hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:text-rule-mid"
+                                className="inline-flex h-10 w-10 items-center justify-center transition-colors duration-150 hover:bg-ink hover:text-canvas disabled:pointer-events-none disabled:text-line-strong"
                               >
                                 <Plus size={15} aria-hidden />
                               </button>
@@ -247,9 +247,9 @@ function Cart() {
                           </div>
 
                           {line.value > stock && (
-                            <Mark tone="scarlet">
+                            <Badge tone="sale">
                               เหลือ {stock} ชิ้น กรุณาลดจำนวนก่อนชำระเงิน
-                            </Mark>
+                            </Badge>
                           )}
                         </div>
                       </li>
@@ -260,12 +260,12 @@ function Cart() {
 
               {/* The box score. */}
               <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-                <section aria-labelledby="cart-address" className="border border-rule bg-stock">
+                <section aria-labelledby="cart-address" className="border border-line bg-surface">
                   <h2
                     id="cart-address"
-                    className="flex items-center gap-2 border-b border-rule px-5 py-3 font-display text-small font-bold"
+                    className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-small font-bold"
                   >
-                    <MapPin size={16} aria-hidden className="text-[var(--section-text)]" /> ที่อยู่จัดส่ง
+                    <MapPin size={16} aria-hidden className="text-[var(--ink)]" /> ที่อยู่จัดส่ง
                   </h2>
                   <div className="p-5">
                     {editingAddress ? (
@@ -288,7 +288,7 @@ function Cart() {
                           </Button>
                           <Button
                             size="sm"
-                            tone="quiet"
+                            tone="secondary"
                             onClick={() => {
                               setAddress(me?.address ?? "");
                               setEditingAddress(false);
@@ -301,13 +301,13 @@ function Cart() {
                       </div>
                     ) : (
                       <>
-                        <p className={`text-small ${me?.address ? "text-ink-mid" : "text-ink-soft"}`}>
+                        <p className={`text-small ${me?.address ? "text-muted" : "text-subtle"}`}>
                           {me?.address || "ยังไม่ได้ระบุที่อยู่จัดส่ง — ต้องกรอกก่อนจึงจะชำระเงินได้"}
                         </p>
                         <button
                           type="button"
                           onClick={() => setEditingAddress(true)}
-                          className="mt-1 inline-flex min-h-[40px] items-center text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
+                          className="mt-1 inline-flex min-h-[40px] items-center text-caption font-semibold text-[var(--ink)] underline underline-offset-4"
                         >
                           {me?.address ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่จัดส่ง"}
                         </button>
@@ -316,29 +316,29 @@ function Cart() {
                   </div>
                 </section>
 
-                <section aria-labelledby="cart-summary" className="border border-rule bg-stock">
-                  <h2 id="cart-summary" className="border-b border-rule px-5 py-3 font-display text-small font-bold">
+                <section aria-labelledby="cart-summary" className="border border-line bg-surface">
+                  <h2 id="cart-summary" className="border-b border-line px-5 py-3 font-display text-small font-bold">
                     สรุปคำสั่งซื้อ
                   </h2>
-                  <dl className="divide-y divide-rule px-5 text-small">
+                  <dl className="divide-y divide-line px-5 text-small">
                     <div className="flex justify-between gap-4 py-3">
-                      <dt className="text-ink-mid">ราคาสินค้า ({units} ชิ้น)</dt>
+                      <dt className="text-muted">ราคาสินค้า ({units} ชิ้น)</dt>
                       <dd>
                         <Money value={subTotal} />
                       </dd>
                     </div>
                     <div className="flex justify-between gap-4 py-3">
-                      <dt className="flex items-center gap-1.5 text-ink-mid">
-                        <Truck size={14} aria-hidden className="text-ink-soft" /> ค่าจัดส่ง
+                      <dt className="flex items-center gap-1.5 text-muted">
+                        <Truck size={14} aria-hidden className="text-subtle" /> ค่าจัดส่ง
                       </dt>
                       <dd>
                         <Money value={shipping} />
                       </dd>
                     </div>
                   </dl>
-                  <div className="flex items-center justify-between gap-4 border-t-2 border-ink px-5 py-4">
+                  <div className="flex items-center justify-between gap-4 border-t border-line px-5 py-4">
                     <span className="font-display text-small font-bold">ยอดชำระสุทธิ</span>
-                    <Money value={subTotal + shipping} className="text-h3 text-[var(--section-text)]" />
+                    <Money value={subTotal + shipping} className="text-h3 text-[var(--ink)]" />
                   </div>
                   <div className="p-5 pt-0">
                     {overStock.length > 0 && (
@@ -359,7 +359,7 @@ function Cart() {
               </aside>
             </div>
           )}
-        </Sheet>
+        </Shell>
       </main>
 
       <SiteFoot />

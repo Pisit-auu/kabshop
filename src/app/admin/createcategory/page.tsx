@@ -7,7 +7,7 @@ import SiteFoot from "../../components/sitefoot";
 import RequireAuth from "../../components/requireauth";
 import { useFlash } from "../../components/flash";
 import { FormShell, Fieldset } from "../../components/adminform";
-import { Button, Label, Notice, Sheet } from "../../components/press";
+import { Button, Label, Notice, Shell } from "../../components/press";
 
 export default function CreateCategoryPage() {
   return (
@@ -24,12 +24,6 @@ function CreateCategory() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.dataset.section = "cobalt";
-    return () => {
-      delete document.documentElement.dataset.section;
-    };
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +51,7 @@ function CreateCategory() {
     <div className="min-h-screen">
       <Masthead />
       <main>
-        <Sheet width="narrow" className="pb-20">
+        <Shell width="narrow" className="pb-20">
           <FormShell
             title="เพิ่มหมวดหมู่"
             intro="หมวดหมู่จะปรากฏเป็นสารบัญบนหน้าร้าน และใช้กรองสินค้าให้ลูกค้า"
@@ -86,13 +80,13 @@ function CreateCategory() {
                 <Button type="submit" size="lg" busy={saving} disabled={!name.trim()} className="flex-1">
                   สร้างหมวดหมู่
                 </Button>
-                <Button type="button" tone="quiet" size="lg" onClick={() => router.push("/admin")}>
+                <Button type="button" tone="secondary" size="lg" onClick={() => router.push("/admin")}>
                   ยกเลิก
                 </Button>
               </div>
             </form>
           </FormShell>
-        </Sheet>
+        </Shell>
       </main>
       <SiteFoot />
     </div>

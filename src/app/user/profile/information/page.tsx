@@ -9,7 +9,7 @@ import Sidebar from "../../../components/sidebar";
 import RequireAuth from "../../../components/requireauth";
 import { useMe } from "../../../components/me";
 import { useFlash } from "../../../components/flash";
-import { Button, RunningHead, Sheet } from "../../../components/press";
+import { Button, PageHead, Shell } from "../../../components/press";
 
 type FieldKey = "name" | "email" | "phone" | "lineid" | "address";
 
@@ -60,12 +60,6 @@ function Information() {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.dataset.section = "cobalt";
-    return () => {
-      delete document.documentElement.dataset.section;
-    };
-  }, []);
 
   const start = (key: FieldKey) => {
     setDraft((me?.[key] as string) ?? "");
@@ -106,8 +100,8 @@ function Information() {
       <Masthead />
 
       <main>
-        <Sheet className="pb-20">
-          <RunningHead
+        <Shell className="pb-20">
+          <PageHead
             title="ข้อมูลส่วนตัว"
             meta={
               incomplete
@@ -121,17 +115,17 @@ function Information() {
               <Sidebar />
             </div>
 
-            <dl className="border border-rule bg-stock">
+            <dl className="border border-line bg-surface">
               {FIELDS.map(({ key, label, hint, type, multiline, autoComplete, placeholder }) => {
                 const value = (me?.[key] as string) ?? "";
                 const isEditing = editing === key;
                 const required = key === "name" || key === "phone" || key === "address";
 
                 return (
-                  <div key={key} className="border-b border-rule px-5 py-4 last:border-b-0">
+                  <div key={key} className="border-b border-line px-5 py-4 last:border-b-0">
                     <dt className="mb-2 flex flex-wrap items-baseline gap-x-2">
                       <span className="u-label">{label}</span>
-                      {hint && <span className="text-caption text-ink-soft">{hint}</span>}
+                      {hint && <span className="text-caption text-subtle">{hint}</span>}
                     </dt>
 
                     <dd>
@@ -165,7 +159,7 @@ function Information() {
                             </Button>
                             <Button
                               size="md"
-                              tone="quiet"
+                              tone="secondary"
                               onClick={() => setEditing(null)}
                               aria-label="ยกเลิก"
                             >
@@ -177,7 +171,7 @@ function Information() {
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <span
                             className={`min-w-0 whitespace-pre-line text-base ${
-                              value ? "text-ink" : "text-ink-soft"
+                              value ? "text-ink" : "text-subtle"
                             }`}
                           >
                             {value || (required ? "ยังไม่ได้กรอก — จำเป็นสำหรับการสั่งซื้อ" : "ยังไม่ได้กรอก")}
@@ -185,7 +179,7 @@ function Information() {
                           <button
                             type="button"
                             onClick={() => start(key)}
-                            className="inline-flex min-h-[40px] shrink-0 items-center px-2 font-display text-caption font-semibold text-[var(--section-text)] underline underline-offset-4"
+                            className="inline-flex min-h-[40px] shrink-0 items-center px-2 font-display text-caption font-semibold text-[var(--ink)] underline underline-offset-4"
                           >
                             {value ? "แก้ไข" : "เพิ่ม"}
                             <span className="sr-only"> {label}</span>
@@ -198,7 +192,7 @@ function Information() {
               })}
             </dl>
           </div>
-        </Sheet>
+        </Shell>
       </main>
 
       <SiteFoot />

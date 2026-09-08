@@ -1,32 +1,22 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { Check, TriangleAlert, Info, X } from "lucide-react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Check, Info, TriangleAlert, X } from "lucide-react";
 
 type FlashKind = "ok" | "warn" | "info";
 type FlashItem = { id: number; kind: FlashKind; text: string };
 
 const FlashContext = createContext<(kind: FlashKind, text: string) => void>(() => {});
 
-/**
- * Live state arrives as a reversed-type news flash, never as a silent number.
- * Replaces every window.alert() in the app.
- */
+/** Replaces every window.alert() in the app. */
 export function useFlash() {
   return useContext(FlashContext);
 }
 
-const SKIN: Record<FlashKind, { bg: string; fg: string; label: string; Icon: typeof Check }> = {
-  ok: { bg: "var(--jade)", fg: "#fff", label: "สำเร็จ", Icon: Check },
-  warn: { bg: "var(--scarlet)", fg: "#fff", label: "ไม่สำเร็จ", Icon: TriangleAlert },
-  info: { bg: "var(--ink)", fg: "#fff", label: "แจ้งให้ทราบ", Icon: Info },
+const SKIN: Record<FlashKind, { ring: string; icon: string; Icon: typeof Check }> = {
+  ok: { ring: "border-go/25", icon: "bg-go-soft text-go-text", Icon: Check },
+  warn: { ring: "border-sale/25", icon: "bg-sale-soft text-sale-text", Icon: TriangleAlert },
+  info: { ring: "border-line", icon: "bg-canvas-2 text-ink", Icon: Info },
 };
 
 export function FlashProvider({ children }: { children: React.ReactNode }) {
@@ -56,30 +46,26 @@ export function FlashProvider({ children }: { children: React.ReactNode }) {
       <div
         role="status"
         aria-live="polite"
-        className="fixed inset-x-0 top-0 z-[100] flex flex-col items-center gap-px px-4 pt-4 pointer-events-none"
+        className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex flex-col items-center gap-2 px-4"
       >
         {items.map((item) => {
           const skin = SKIN[item.kind];
           return (
             <div
               key={item.id}
-              className="pointer-events-auto flex w-full max-w-[560px] items-stretch animate-flash-in"
-              style={{ background: skin.bg, color: skin.fg }}
+              className={`pointer-events-auto flex w-full max-w-[440px] items-start gap-3 rounded border bg-surface p-3 shadow-pop animate-slide-down ${skin.ring}`}
             >
-              <span className="flex items-center gap-2 px-3 py-3 border-r border-white/25">
-                <skin.Icon size={16} strokeWidth={2.5} aria-hidden />
-                <span className="u-label" style={{ color: skin.fg }}>
-                  {skin.label}
-                </span>
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${skin.icon}`}>
+                <skin.Icon size={15} strokeWidth={2.5} aria-hidden />
               </span>
-              <p className="flex-1 px-3 py-3 text-small font-medium leading-snug">{item.text}</p>
+              <p className="flex-1 pt-0.5 text-small text-ink">{item.text}</p>
               <button
                 type="button"
                 onClick={() => dismiss(item.id)}
                 aria-label="ปิดข้อความ"
-                className="px-3 border-l border-white/25 transition-colors duration-150 hover:bg-black/15"
+                className="-m-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-subtle transition-colors duration-150 hover:bg-canvas-2 hover:text-ink"
               >
-                <X size={16} strokeWidth={2.5} aria-hidden />
+                <X size={15} aria-hidden />
               </button>
             </div>
           );

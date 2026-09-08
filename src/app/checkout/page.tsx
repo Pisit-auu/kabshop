@@ -10,7 +10,7 @@ import SiteFoot from "../components/sitefoot";
 import RequireAuth from "../components/requireauth";
 import { useMe } from "../components/me";
 import { useFlash } from "../components/flash";
-import { Button, ButtonLink, Empty, Money, Notice, RunningHead, Sheet, PageLoading } from "../components/press";
+import { Button, ButtonLink, Empty, Money, Notice, PageHead, Shell, PageLoading } from "../components/press";
 
 const SHIPPING_COST = 36;
 
@@ -110,8 +110,8 @@ function Checkout() {
       <Masthead />
 
       <main>
-        <Sheet className="pb-20">
-          <RunningHead title="ยืนยันคำสั่งซื้อ" meta="ตรวจสอบที่อยู่ รายการ และยอดชำระก่อนกดยืนยัน" />
+        <Shell className="pb-20">
+          <PageHead title="ยืนยันคำสั่งซื้อ" meta="ตรวจสอบที่อยู่ รายการ และยอดชำระก่อนกดยืนยัน" />
 
           {lines.length === 0 ? (
             <div className="mt-8">
@@ -126,14 +126,14 @@ function Checkout() {
             <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="space-y-8">
                 {/* Delivery */}
-                <section aria-labelledby="ck-address" className="border border-rule bg-stock">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rule px-5 py-3">
+                <section aria-labelledby="ck-address" className="border border-line bg-surface">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
                     <h2 id="ck-address" className="flex items-center gap-2 font-display text-small font-bold">
-                      <MapPin size={16} aria-hidden className="text-[var(--section-text)]" /> จัดส่งถึง
+                      <MapPin size={16} aria-hidden className="text-[var(--ink)]" /> จัดส่งถึง
                     </h2>
                     <Link
                       href="/user/profile/information"
-                      className="inline-flex min-h-[40px] items-center text-caption font-semibold underline underline-offset-4 decoration-rule-mid hover:decoration-ink"
+                      className="inline-flex min-h-[40px] items-center text-caption font-semibold underline underline-offset-4 decoration-line-strong hover:decoration-ink"
                     >
                       แก้ไขข้อมูล
                     </Link>
@@ -146,36 +146,36 @@ function Checkout() {
                     ) : (
                       <address className="not-italic">
                         <p className="text-base font-semibold">{me?.name}</p>
-                        <p className="u-fig mt-1 text-small text-ink-mid">{me?.phone}</p>
-                        <p className="mt-1 max-w-[52ch] whitespace-pre-line text-small text-ink-mid">{me?.address}</p>
+                        <p className="u-fig mt-1 text-small text-muted">{me?.phone}</p>
+                        <p className="mt-1 max-w-[52ch] whitespace-pre-line text-small text-muted">{me?.address}</p>
                       </address>
                     )}
                   </div>
                 </section>
 
                 {/* Lines */}
-                <section aria-labelledby="ck-items" className="border border-rule bg-stock">
+                <section aria-labelledby="ck-items" className="border border-line bg-surface">
                   <h2
                     id="ck-items"
-                    className="flex items-center gap-2 border-b border-rule px-5 py-3 font-display text-small font-bold"
+                    className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-small font-bold"
                   >
-                    <Truck size={16} aria-hidden className="text-[var(--section-text)]" /> รายการสินค้า
+                    <Truck size={16} aria-hidden className="text-[var(--ink)]" /> รายการสินค้า
                   </h2>
-                  <ul className="divide-y divide-rule">
+                  <ul className="divide-y divide-line">
                     {lines.map((line) => (
                       <li key={line.id} className="flex items-center gap-4 px-5 py-4">
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-rule bg-paper-deep">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-line bg-canvas-2">
                           {line.post.img ? (
                             <Image src={line.post.img} alt="" fill sizes="64px" className="object-cover" />
                           ) : (
-                            <span className="flex h-full items-center justify-center text-ink-soft">
+                            <span className="flex h-full items-center justify-center text-subtle">
                               <PackageOpen size={18} strokeWidth={1.5} aria-hidden />
                             </span>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-small font-semibold">{line.post.title}</p>
-                          <p className="u-fig mt-1 text-caption text-ink-mid">
+                          <p className="u-fig mt-1 text-caption text-muted">
                             {line.value} × {(line.post.price ?? 0).toLocaleString("th-TH")}
                           </p>
                         </div>
@@ -186,23 +186,23 @@ function Checkout() {
                 </section>
 
                 {/* Payment */}
-                <section aria-labelledby="ck-pay" className="border border-rule bg-stock">
+                <section aria-labelledby="ck-pay" className="border border-line bg-surface">
                   <h2
                     id="ck-pay"
-                    className="flex items-center gap-2 border-b border-rule px-5 py-3 font-display text-small font-bold"
+                    className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-small font-bold"
                   >
-                    <CreditCard size={16} aria-hidden className="text-[var(--section-text)]" /> วิธีการชำระเงิน
+                    <CreditCard size={16} aria-hidden className="text-[var(--ink)]" /> วิธีการชำระเงิน
                   </h2>
                   <fieldset className="p-5">
                     <legend className="sr-only">เลือกวิธีการชำระเงิน</legend>
-                    <div className="grid grid-cols-1 gap-px bg-rule sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-2">
                       {METHODS.map(({ id, label, note, Icon }) => {
                         const active = method === id;
                         return (
                           <label
                             key={id}
                             className={`flex cursor-pointer items-start gap-3 p-4 transition-colors duration-150 ${
-                              active ? "bg-[var(--section-fill)] text-[var(--section-on)]" : "bg-stock hover:bg-paper"
+                              active ? "bg-[var(--brand)] text-[var(--brand-on)]" : "bg-surface hover:bg-canvas"
                             }`}
                           >
                             <input
@@ -216,7 +216,7 @@ function Checkout() {
                             <span
                               aria-hidden
                               className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 ${
-                                active ? "border-current" : "border-ink-soft"
+                                active ? "border-current" : "border-subtle"
                               }`}
                             >
                               {active && <span className="h-2.5 w-2.5 bg-current" />}
@@ -226,7 +226,7 @@ function Checkout() {
                                 <Icon size={16} aria-hidden /> {label}
                               </span>
                               <span
-                                className={`mt-1 block text-caption ${active ? "opacity-85" : "text-ink-mid"}`}
+                                className={`mt-1 block text-caption ${active ? "opacity-85" : "text-muted"}`}
                               >
                                 {note}
                               </span>
@@ -241,27 +241,27 @@ function Checkout() {
 
               {/* The box score. */}
               <aside className="lg:sticky lg:top-6 lg:self-start">
-                <section aria-labelledby="ck-total" className="border-2 border-ink bg-stock">
-                  <h2 id="ck-total" className="border-b border-rule px-5 py-3 font-display text-small font-bold">
+                <section aria-labelledby="ck-total" className="border-2 border-ink bg-surface">
+                  <h2 id="ck-total" className="border-b border-line px-5 py-3 font-display text-small font-bold">
                     ยอดที่ต้องชำระ
                   </h2>
-                  <dl className="divide-y divide-rule px-5 text-small">
+                  <dl className="divide-y divide-line px-5 text-small">
                     <div className="flex justify-between gap-4 py-3">
-                      <dt className="text-ink-mid">ยอดรวมสินค้า</dt>
+                      <dt className="text-muted">ยอดรวมสินค้า</dt>
                       <dd>
                         <Money value={subTotal} />
                       </dd>
                     </div>
                     <div className="flex justify-between gap-4 py-3">
-                      <dt className="text-ink-mid">ค่าจัดส่ง</dt>
+                      <dt className="text-muted">ค่าจัดส่ง</dt>
                       <dd>
                         <Money value={SHIPPING_COST} />
                       </dd>
                     </div>
                   </dl>
-                  <div className="flex items-center justify-between gap-4 border-t-2 border-ink px-5 py-4">
+                  <div className="flex items-center justify-between gap-4 border-t border-line px-5 py-4">
                     <span className="font-display text-small font-bold">รวมสุทธิ</span>
-                    <Money value={total} className="text-h3 text-[var(--section-text)]" />
+                    <Money value={total} className="text-h3 text-[var(--ink)]" />
                   </div>
 
                   <div className="space-y-3 p-5 pt-0">
@@ -275,7 +275,7 @@ function Checkout() {
                     >
                       ยืนยันสั่งซื้อ <ChevronRight size={18} aria-hidden />
                     </Button>
-                    <p className="text-caption text-ink-mid">
+                    <p className="text-caption text-muted">
                       {missing.length > 0
                         ? "กรอกข้อมูลจัดส่งให้ครบก่อนจึงจะยืนยันได้"
                         : !method
@@ -287,7 +287,7 @@ function Checkout() {
               </aside>
             </div>
           )}
-        </Sheet>
+        </Shell>
       </main>
 
       <SiteFoot />
