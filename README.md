@@ -223,7 +223,7 @@ CLOUDINARY_API_SECRET="your-api-secret"
 | `CLOUDINARY_API_KEY` | ✅ | API key ของ Cloudinary |
 | `CLOUDINARY_API_SECRET` | ✅ | API secret ของ Cloudinary |
 
-> **อย่า commit ค่าจริงลงไฟล์ `.env`** ตอนนี้ `.gitignore` ยกเว้นแค่ `.env*.local` แนะนำให้ใช้ไฟล์ `.env.local` หรือเพิ่ม `.env` ลงใน `.gitignore`
+> **อย่า commit ไฟล์ `.env`** ไฟล์นี้อยู่ใน `.gitignore` แล้ว
 
 ---
 
