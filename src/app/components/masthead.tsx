@@ -105,6 +105,16 @@ function Header() {
                 <span className="h-11 w-24 rounded-sm bg-canvas-2" aria-hidden />
               ) : me ? (
                 <>
+                  {(me.role === "admin" || me.role === "superadmin") && (
+                    <Link
+                      href="/admin"
+                      aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+                      className="hidden h-11 items-center gap-2 rounded-sm px-3 text-small font-medium transition-colors duration-150 hover:bg-canvas-2 aria-[current=page]:bg-canvas-2 sm:inline-flex"
+                    >
+                      <Package size={19} aria-hidden />
+                      <span>จัดการร้าน</span>
+                    </Link>
+                  )}
                   <Link
                     href="/user/profile/information"
                     className="hidden h-11 max-w-[180px] items-center gap-2 rounded-sm px-3 text-small font-medium transition-colors duration-150 hover:bg-canvas-2 sm:inline-flex"
