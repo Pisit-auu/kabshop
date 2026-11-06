@@ -16,6 +16,7 @@ import Masthead from "../components/masthead";
 import SiteFoot from "../components/sitefoot";
 import RequireAuth from "../components/requireauth";
 import { useFlash } from "../components/flash";
+import { useMe } from "../components/me";
 import { Button, ButtonLink, Badge, Money, Notice, PageHead, Shell } from "../components/press";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
@@ -48,6 +49,7 @@ export default function AdminPage() {
 }
 
 function Admin() {
+  const { me } = useMe();
   const flash = useFlash();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -142,6 +144,11 @@ function Admin() {
             meta="สต็อก หมวดหมู่ และคำสั่งซื้อทั้งหมดของ KABSHOP"
             action={
               <div className="flex flex-wrap gap-2">
+                {me?.role === "superadmin" && (
+                  <ButtonLink href="/admin/staff" tone="secondary">
+                    <Plus size={16} aria-hidden /> เพิ่มบัญชีแอดมิน
+                  </ButtonLink>
+                )}
                 <ButtonLink href="/admin/createcategory" tone="secondary">
                   <Plus size={16} aria-hidden /> เพิ่มหมวดหมู่
                 </ButtonLink>

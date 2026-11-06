@@ -1,5 +1,5 @@
 import { prisma } from "../../../lib/prisma";
-import { requireUser, fail, HttpError } from "../../../lib/guard";
+import { requireUser, fail, HttpError, isAdminRole } from "../../../lib/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     });
 
     if (!order) throw new HttpError(404, "ไม่พบคำสั่งซื้อหมายเลขนี้");
-    if (order.userId !== me.id && me.role !== "admin") {
+    if (order.userId !== me.id && !isAdminRole(me.role)) {
       throw new HttpError(403, "คำสั่งซื้อนี้ไม่ได้เป็นของบัญชีคุณ");
     }
 

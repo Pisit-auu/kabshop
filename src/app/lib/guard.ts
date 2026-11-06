@@ -27,9 +27,19 @@ export async function requireUser() {
   return user;
 }
 
+/** Roles: "member" (customer), "admin" (shop staff), "superadmin" (owns staff accounts). */
+export const isAdminRole = (role?: string | null) => role === "admin" || role === "superadmin";
+
 export async function requireAdmin() {
   const user = await requireUser();
-  if (user.role !== "admin") throw new HttpError(403, "ต้องมีสิทธิ์ผู้ดูแลระบบ");
+  if (!isAdminRole(user.role)) throw new HttpError(403, "ต้องมีสิทธิ์ผู้ดูแลระบบ");
+  return user;
+}
+
+/** Only the superadmin may create staff accounts. */
+export async function requireSuperadmin() {
+  const user = await requireUser();
+  if (user.role !== "superadmin") throw new HttpError(403, "เฉพาะซูเปอร์แอดมินเท่านั้น");
   return user;
 }
 

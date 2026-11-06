@@ -7,6 +7,8 @@ import Masthead from "./masthead";
 import { PageLoading } from "./press";
 import { useMe } from "./me";
 
+const isAdminRole = (role?: string | null) => role === "admin" || role === "superadmin";
+
 /**
  * Gate for member pages. Sends an unauthenticated reader to the sign-in form
  * carrying where they were headed, so they land back on it afterwards.
@@ -30,10 +32,10 @@ export default function RequireAuth({
   }, [status, router, pathname]);
 
   useEffect(() => {
-    if (admin && !loading && me && me.role !== "admin") router.replace("/");
+    if (admin && !loading && me && !isAdminRole(me.role)) router.replace("/");
   }, [admin, loading, me, router]);
 
-  if (status !== "authenticated" || loading || !me || (admin && me.role !== "admin")) {
+  if (status !== "authenticated" || loading || !me || (admin && !isAdminRole(me.role))) {
     return (
       <div className="min-h-screen">
         <Masthead />

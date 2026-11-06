@@ -221,7 +221,7 @@ function Header() {
                   >
                     ข้อมูลส่วนตัว
                   </MenuLink>
-                  {me.role === "admin" && (
+                  {(me.role === "admin" || me.role === "superadmin") && (
                     <MenuLink href="/admin" active={pathname === "/admin"} icon={<Package size={18} />}>
                       จัดการร้าน
                     </MenuLink>

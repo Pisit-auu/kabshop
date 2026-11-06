@@ -1,5 +1,5 @@
 import { prisma } from "../../../lib/prisma";
-import { requireUser, fail, badRequest, HttpError } from "../../../lib/guard";
+import { requireUser, fail, badRequest, HttpError, isAdminRole } from "../../../lib/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,8 +9,13 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Only the account holder — or an admin — may read or write a profile. */
 async function authorize(email: string) {
   const me = await requireUser();
-  if (me.email !== email && me.role !== "admin") {
-    throw new HttpError(403, "ไม่มีสิทธิ์เข้าถึงข้อมูลผู้ใช้รายนี้");
+  if (me.email !== email) {
+    if (!isAdminRole(me.role)) throw new HttpError(403, "ไม่มีสิทธิ์เข้าถึงข้อมูลผู้ใช้รายนี้");
+    // admin ดูแลบัญชีลูกค้าได้ แต่บัญชี superadmin มีแค่ superadmin เองที่แตะได้
+    if (me.role !== "superadmin") {
+      const target = await prisma.user.findUnique({ where: { email }, select: { role: true } });
+      if (target?.role === "superadmin") throw new HttpError(403, "ไม่มีสิทธิ์เข้าถึงข้อมูลผู้ใช้รายนี้");
+    }
   }
   return me;
 }
